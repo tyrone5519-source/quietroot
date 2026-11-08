@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b141c">
+<meta name="theme-color" content="#24272a">
 <title>Quietroot</title>
 <meta name="description" content="A quiet garden for busy minds. Focus sessions, breathing, daily planning, check-ins and calming mini-games that grow a garden over time.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=Manrope:wght@300..800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -49,57 +49,51 @@
     <div id="insightsBody"></div>
   </section>
 
-  <!-- HOME -->
+  <!-- HOME: the lot -->
   <main id="s-home" class="screen">
     <header class="home-head">
-      <div><p class="eyebrow" id="dateLine"></p><h1 id="greet">Hello</h1></div>
-      <div class="row" style="flex-wrap:nowrap;gap:8px"><button class="btn sm quiet-btn" id="quietBtn"></button><button class="icon-btn" id="musicBtn"></button></div>
+      <div><h1 id="greet">Hello</h1><p class="date" id="dateLine"></p></div>
+      <div class="row head-actions"><button class="btn sm quiet-btn" id="quietBtn"></button><button class="icon-btn" id="musicBtn"></button></div>
     </header>
-    <div class="card quiet-banner hidden" id="quietBanner"><span>Quiet mode is on. Music is paused.</span><button class="btn sm" id="quietOff">Turn off</button></div>
-    <div class="scene">
-      <svg id="garden" viewBox="0 0 400 300" role="img" aria-label="Your garden"></svg>
-      <div class="scene-chips"><span class="chip" id="plantChip"></span><span class="chip" id="todChip"></span></div>
+    <div class="quiet-banner hidden" id="quietBanner"><span>Quiet mode is on. Music is paused.</span><button class="btn sm" id="quietOff">Turn off</button></div>
+    <section class="lot-wrap" aria-label="Your lot">
+      <div class="skyline">
+        <svg id="garden" viewBox="0 0 400 150" preserveAspectRatio="xMidYMax slice" role="img" aria-label="The sky over your lot, following the time of day"></svg>
+        <div class="scene-chips"><span class="chip" id="plantChip"></span><span class="chip" id="todChip"></span></div>
+      </div>
+      <div class="lot" id="lot" role="group" aria-label="Plots. Each plot is one kind of activity; tap one to see what grew there."></div>
+    </section>
+    <div class="sign next" id="plotSign" aria-live="polite"></div>
+    <nav class="qlinks" id="qlinks" aria-label="Other things to do"></nav>
+    <div class="unlock">
+      <div class="unlock-top"><span id="nextName"></span><span id="nextLeft"></span></div>
+      <div class="meter" aria-hidden="true"><i id="nextBar"></i></div>
     </div>
-    <p class="scene-hint" id="sceneHint">Tap a plant to see its story.</p>
-    <div class="card plant-info hidden" id="plantInfo"></div>
-    <div class="card unlock">
-      <div class="unlock-top"><span id="nextName"></span><span class="muted" id="nextLeft"></span></div>
-      <div class="meter"><i id="nextBar"></i></div>
-    </div>
-
-    <div class="stack" style="margin-top:12px" id="homeCards">
-      <button class="card row-card" data-go="feelings" id="checkinCard"></button>
-      <button class="card row-card" data-go="path" id="todayCard"></button>
-    </div>
-
-    <div class="section"><h3>Quick start</h3></div>
-    <div class="quick">
-      <button class="q1" id="quickFocus"></button>
-      <button class="q2" id="quickBreathe"></button>
-    </div>
-
-    <div class="section"><h3>Unwind</h3><span class="muted" style="font-size:.85rem">No timers, no scores</span></div>
-    <div class="tiles" id="tiles"></div>
-
-    <div class="section"><h3>This week</h3><span class="muted" id="weekNote" style="font-size:.85rem"></span></div>
-    <div class="card"><div class="week" id="week"></div></div>
-    <button class="card row-card" data-go="insights" id="insightsCard" style="margin-top:12px"></button>
   </main>
+
+  <!-- UNWIND -->
+  <section id="s-unwind" class="screen hidden">
+    <div class="topbar"><button class="icon-btn" data-home></button><h2>Unwind</h2></div>
+    <p class="caption">Four quiet games. No timers, no scores. Each one plants something in its plot.</p>
+    <div class="tiles" id="tiles"></div>
+  </section>
 
   <!-- FOCUS -->
   <section id="s-focus" class="screen hidden">
     <div class="topbar"><h2>Focus</h2><button class="btn link" id="fHide" aria-pressed="false">Hide clock</button></div>
     <p class="caption" data-say></p>
-    <div class="controls" id="fControls">
-      <div><div class="field-label">Minutes</div><div class="seg" id="fMins"></div></div>
-      <input class="input" id="fTask" maxlength="60" placeholder="What are you working on? (optional)" aria-label="What are you working on">
+    <p class="now-step hidden" id="fNow"></p>
+    <div class="stage f-stage"><svg id="fSvg" viewBox="0 0 300 220" aria-hidden="true"></svg><div class="buddy hidden" id="fBuddy" aria-hidden="true"><i></i></div></div>
+    <p class="bigtime" id="fTime" aria-live="off"></p>
+    <div class="row center f-actions"><button class="btn go" id="fStart">Start</button><button class="btn hidden" id="fStop">Finish early</button><button class="btn hidden" id="fMore">Keep going, 10 more</button><button class="btn hidden" id="fBreak">Take a 5-min break</button></div>
+    <button class="summary-row" id="fSummary" aria-controls="fControls" aria-expanded="false"></button>
+    <div class="controls hidden" id="fControls">
+      <div><div class="field-label" id="fMinsLabel">Minutes</div><div class="seg" id="fMins" role="group" aria-labelledby="fMinsLabel"></div></div>
+      <label class="field-label" for="fTask">What are you working on?</label>
+      <input class="input" id="fTask" maxlength="60" placeholder="Optional, like Reply to the landlord" style="margin-top:-6px">
       <div class="card fsteps" id="fSteps"></div>
       <div class="card set-inline"><div><div style="font-weight:700">Work with a companion</div><div class="d">A quiet light keeps you company and checks in now and then</div></div><button class="switch" role="switch" id="fBuddySw" aria-label="Work with a companion"><i></i></button></div>
     </div>
-    <p class="now-step hidden" id="fNow"></p>
-    <div class="stage f-stage"><svg id="fSvg" viewBox="0 0 300 300" aria-hidden="true"></svg><div class="buddy hidden" id="fBuddy" aria-hidden="true"><i></i></div></div>
-    <p class="bigtime" id="fTime"></p>
-    <div class="row center" style="margin-top:14px"><button class="btn primary" id="fStart" style="min-width:150px">Start</button><button class="btn hidden" id="fStop">Finish early</button><button class="btn hidden" id="fMore">Keep going, 10 more</button><button class="btn hidden" id="fBreak">Take a 5-min break</button></div>
   </section>
 
   <!-- BREATHE -->
@@ -125,6 +119,7 @@
     <div id="planBox">
       <div class="section"><h3>Add a step</h3></div>
       <div class="addgrid" id="addgrid"></div>
+      <button class="btn link" id="moreSteps" aria-controls="addgrid" aria-expanded="false" style="margin-top:6px">More steps</button>
       <form class="row" id="customForm" style="margin-top:12px;flex-wrap:nowrap"><input class="input" id="customText" maxlength="30" placeholder="Your own step, e.g. Reply to landlord" aria-label="Your own step"><button class="btn sm primary" style="min-height:52px">Add</button></form>
       <div class="row" style="margin-top:12px"><button class="btn sm" id="sampleMorning">Use a sample morning</button><button class="btn link" id="clearPath">Clear all</button></div>
     </div>
@@ -134,15 +129,25 @@
   <section id="s-feelings" class="screen hidden">
     <div class="topbar"><button class="icon-btn" data-home aria-label="Back"></button><h2>Check in</h2></div>
     <p class="caption" data-say></p>
-    <div id="feelStep1"><div class="moods" id="moods"></div></div>
+    <div id="feelStep1"><div class="moods" id="moods" role="group" aria-label="How are you feeling?"></div></div>
     <div id="feelStep2" class="hidden"><div class="levels" id="levels"></div><div class="row center" style="margin-top:12px"><button class="btn link" id="feelBack">Pick a different feeling</button></div></div>
-    <div id="feelStep3" class="hidden"><div class="card reply" id="reply"></div><div class="stack" id="feelGo" style="margin-top:12px"></div></div>
+    <div id="feelStep3" class="hidden"><div class="card reply" id="reply"></div>
+      <div class="support hidden" id="support" role="note">
+        <h3>If it feels like too much to hold alone</h3>
+        <p>You don't have to handle this by yourself. If you're thinking about harming yourself or you don't feel safe, reach out now.</p>
+        <ul>
+          <li><b>In the US:</b> call or text <span class="num">988</span> (Suicide &amp; Crisis Lifeline), any time.</li>
+          <li><b>Elsewhere:</b> find a free local helpline at <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a>.</li>
+          <li><b>In danger right now:</b> call your local emergency number.</li>
+        </ul>
+        <p class="muted">Quietroot is a calming tool, not a replacement for care.</p>
+      </div><div class="stack" id="feelGo" style="margin-top:12px"></div></div>
     <div id="logBox"><div class="section"><h3>Recent</h3></div><div class="card"><div class="history" id="history"></div></div></div>
   </section>
 
   <!-- SORT -->
   <section id="s-sort" class="screen hidden">
-    <div class="topbar"><button class="icon-btn" data-home aria-label="Back"></button><h2>Sort</h2><span class="muted" id="sortRound" style="font-weight:700"></span></div>
+    <div class="topbar"><button class="icon-btn" data-home="unwind"></button><h2>Sort</h2><span class="muted" id="sortRound" style="font-weight:700"></span></div>
     <p class="caption" data-say></p>
     <div class="tray" id="tray"></div>
     <div class="bins" id="bins"></div>
@@ -151,7 +156,7 @@
 
   <!-- PATTERN -->
   <section id="s-pattern" class="screen hidden">
-    <div class="topbar"><button class="icon-btn" data-home aria-label="Back"></button><h2>Match</h2></div>
+    <div class="topbar"><button class="icon-btn" data-home="unwind"></button><h2>Match</h2></div>
     <p class="caption" data-say></p>
     <div class="controls"><div class="seg" id="bedSizes"></div></div>
     <div class="boards" id="boards">
@@ -165,7 +170,7 @@
 
   <!-- FIREFLIES -->
   <section id="s-fireflies" class="screen hidden">
-    <div class="topbar"><button class="icon-btn" data-home aria-label="Back"></button><h2>Fireflies</h2><span class="muted" id="ffCount" style="font-weight:700"></span></div>
+    <div class="topbar"><button class="icon-btn" data-home="unwind"></button><h2>Fireflies</h2><span class="muted" id="ffCount" style="font-weight:700"></span></div>
     <p class="caption" data-say></p>
     <div class="canvas"><canvas id="ffc" width="640" height="440" aria-label="A night garden with fireflies and a jar"></canvas></div>
     <div class="row center"><button class="btn" id="ffHelp">Auto-catch one</button><button class="btn primary hidden" id="ffFree">Release them</button><button class="btn primary hidden" id="ffAgain">Play again</button></div>
@@ -173,11 +178,11 @@
 
   <!-- SAND -->
   <section id="s-rake" class="screen hidden">
-    <div class="topbar"><button class="icon-btn" data-home aria-label="Back"></button><h2>Sand</h2></div>
+    <div class="topbar"><button class="icon-btn" data-home="unwind"></button><h2>Sand</h2></div>
     <p class="caption" data-say></p>
     <div class="canvas"><canvas id="sand" width="640" height="440" aria-label="Sand to rake with your finger or mouse"></canvas></div>
     <div class="controls"><div class="seg" id="rakeSeg"><button data-rake="4">Wide rake</button><button data-rake="1">Single line</button></div></div>
-    <div class="row center"><button class="btn" id="sandClear">Smooth</button><button class="btn primary" id="sandDone">Done</button></div>
+    <div class="row center"><button class="btn" id="sandClear">Smooth</button><button class="btn" id="sandAuto">Rake a pattern for me</button><button class="btn go" id="sandDone">Done</button></div>
   </section>
 
   <!-- SETTINGS -->
@@ -201,6 +206,10 @@
       <div class="set"><div><div>Reduce motion</div><div class="d">Turns off movement and animation</div></div><button class="switch" role="switch" data-set="still" aria-label="Reduce motion"><i></i></button></div>
       <div class="set"><div>High contrast</div><button class="switch" role="switch" data-set="contrast" aria-label="High contrast"><i></i></button></div>
       <div class="set"><div>Text size</div><div class="row"><button class="btn sm" id="fsDown" aria-label="Smaller text">A−</button><button class="btn sm" id="fsUp" aria-label="Bigger text">A+</button></div></div>
+    </div>
+    <div class="field-label">Support</div>
+    <div class="group support-group">
+      <div class="set"><div><div>If you're not safe or it feels like too much</div><div class="d">In the US, call or text 988 any time. Elsewhere, find a free helpline at <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a>, or call your local emergency number.</div></div></div>
     </div>
     <div class="field-label">App</div>
     <div class="group">

@@ -45,7 +45,7 @@ const icon = (n, cls = "") => `<svg class="${cls}" viewBox="0 0 24 24" fill="non
 /* ================= save data (this device only) ================= */
 const today = (d = new Date()) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 const DEF = {
-  plants: [], days: [], sound: false, music: true, vol: 0.5, track: "garden", theme: "dark", contrast: false, fs: 1,
+  plants: [], days: [], sound: false, music: false, vol: 0.5, track: "garden", theme: "dark", contrast: false, fs: 1,
   motion: !matchMedia("(prefers-reduced-motion: reduce)").matches,
   breaths: 5, bpat: 0, focusMin: 15, hideClock: false, bed: 0, rake: 4,
   today: {}, feelLog: [], path: { steps: [], done: [], day: "" },
@@ -202,114 +202,181 @@ function musicVolume() { if (music.master) { const t = ac.currentTime; music.mas
 document.addEventListener("visibilitychange", () => { if (ac) document.hidden ? ac.suspend() : ac.resume(); });
 
 /* ================= palette & activities ================= */
-const COLORS = [{ n: "Coral", v: "#ff8a7a" }, { n: "Blue", v: "#7cc4ff" }, { n: "Gold", v: "#ffd166" }, { n: "Violet", v: "#b39cff" }];
+const COLORS = [{ n: "Coral", v: "#ff8a6b" }, { n: "Blue", v: "#6fb3e8" }, { n: "Gold", v: "#f2c14e" }, { n: "Violet", v: "#a98be0" }];
 const ACTS = {
-  focus: { name: "Focus", plant: "fern" }, breathe: { name: "Breathe", plant: "dandelion" },
-  path: { name: "Today", plant: "poppy" }, feelings: { name: "Check in", plant: "sunflower" },
-  sort: { name: "Sort", plant: "tulip", sub: "Calm, simple sorting", bg: "linear-gradient(160deg,#3b2f63,#7a5aa0)" },
-  pattern: { name: "Match", plant: "daisy", sub: "Copy a pattern", bg: "linear-gradient(160deg,#1f4a4b,#3f8a76)" },
-  fireflies: { name: "Fireflies", plant: "bluebell", sub: "Gather slow lights", bg: "linear-gradient(160deg,#0e1838,#2d3f74)" },
-  rake: { name: "Sand", plant: "lavender", sub: "Rake quiet lines", bg: "linear-gradient(160deg,#6b5639,#c2a272)" }
+  focus: { name: "Focus", plant: "fern", why: "a focus session" },
+  breathe: { name: "Breathe", plant: "dandelion", why: "a breathing session" },
+  path: { name: "Today", plant: "poppy", why: "finishing the day's list" },
+  feelings: { name: "Check in", plant: "sunflower", why: "checking in with yourself" },
+  sort: { name: "Sort", plant: "tulip", why: "a round of sorting", sub: "Put things where they go", bg: "#35523a" },
+  pattern: { name: "Match", plant: "daisy", why: "matching a pattern", sub: "Copy a planting plan", bg: "#7a5634" },
+  fireflies: { name: "Fireflies", plant: "bluebell", why: "letting the fireflies go", sub: "Gather slow lights", bg: "#1c2338" },
+  rake: { name: "Sand", plant: "lavender", why: "raking the sand", sub: "Rake quiet lines", bg: "#7d6c4f" }
 };
 const PLANT_NAME = { fern: "Fern", dandelion: "Dandelion", poppy: "Poppy", sunflower: "Sunflower", tulip: "Tulip", daisy: "Daisy", bluebell: "Bluebell", lavender: "Lavender" };
+const BED_DEFAULT = ["focus", "breathe", "path", "feelings", "sort", "pattern", "fireflies", "rake", "library"];
 
-/* ================= garden scene ================= */
+/* ================= the lot: skyline + numbered raised beds ================= */
 const tod = () => { const h = new Date().getHours(); return h < 5 ? "night" : h < 9 ? "dawn" : h < 17 ? "day" : h < 20 ? "dusk" : "night"; };
 const SKY = {
-  dawn: { top: "#f2b49c", bot: "#fde4c4", hills: ["#d3bba8", "#a9bb8f", "#7ea57b"], sun: "#fff0c8", deco: "#557a60", leaf: "#5f9670", label: "Morning garden" },
-  day: { top: "#72bde8", bot: "#dcf2ea", hills: ["#a9d9b8", "#7fc496", "#5aa877"], sun: "#fff6cc", deco: "#3a7f5a", leaf: "#478f63", label: "Day garden" },
-  dusk: { top: "#2a3366", bot: "#ef9f83", hills: ["#7b6690", "#55557f", "#3b4268"], sun: "#ffc896", deco: "#232a4d", leaf: "#4c6f78", label: "Evening garden" },
-  night: { top: "#070f27", bot: "#1b2a52", hills: ["#1d2a4c", "#16213c", "#0f192e"], sun: "#f2efdc", deco: "#0a1325", leaf: "#2d5a54", label: "Night garden" }
+  dawn: { top: "#e9a98f", bot: "#f6d9b8", city: "#6e6168", far: "#9a8a8c", sun: "#fff0c8", leaf: "#6f9a5f", lit: 0, label: "Morning" },
+  day: { top: "#7fb7d9", bot: "#d6e9e8", city: "#5d6a73", far: "#8c99a1", sun: "#fff4c2", leaf: "#5f9a55", lit: 0, label: "Daytime" },
+  dusk: { top: "#3a3a63", bot: "#e59a73", city: "#2c2a40", far: "#4d4865", sun: "#ffc28a", leaf: "#5b8a52", lit: 1, label: "Evening" },
+  night: { top: "#0b1022", bot: "#1d2540", city: "#11141f", far: "#1b2133", sun: "#efeedd", leaf: "#4f7d48", lit: 1, label: "Night" }
 };
 const MILESTONES = [
-  { n: 3, name: "Lantern" }, { n: 6, name: "Pond" }, { n: 10, name: "Tree" }, { n: 15, name: "Fireflies" },
-  { n: 21, name: "Stone path" }, { n: 28, name: "Bench" }, { n: 36, name: "Northern lights" }
+  { n: 3, name: "String lights" }, { n: 6, name: "Rain barrel" }, { n: 10, name: "Street tree" }, { n: 15, name: "Fireflies" },
+  { n: 21, name: "Brick path" }, { n: 28, name: "Bench" }, { n: 36, name: "Northern lights" }
 ];
 let P = SKY.day, GLOW = false;
 const stem = (x, b, t, bend = 4) => `<path d="M${x} ${b}Q${x + bend} ${(b + t) / 2} ${x} ${t}" stroke="${P.leaf}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
 const leafAt = (x, y, s = 1) => `<path d="M${x} ${y}q${-9 * s} ${-2 * s} ${-12 * s} ${-9 * s}q${8 * s} 0 ${12 * s} ${9 * s}z" fill="${P.leaf}"/>`;
-const halo = (x, y, c, r = 11) => GLOW ? `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity=".35" filter="url(#soft)"/>` : "";
 const PLANT = {
-  dandelion: (x, b, h) => { const t = b - h; return stem(x, b, t, 3) + halo(x, t, "#ffffff", 13) + `<circle cx="${x}" cy="${t}" r="8.5" fill="#fffaf0" opacity=".9"/><circle cx="${x}" cy="${t}" r="2.6" fill="#e3cf9c"/>`; },
-  tulip: (x, b, h, c) => { const t = b - h; return stem(x, b, t, -4) + leafAt(x - 1, b - h * .35) + halo(x, t - 4, c) +
+  dandelion: (x, b, h) => { const t = b - h; return stem(x, b, t, 3) + `<circle cx="${x}" cy="${t}" r="7.5" fill="#f4f1e6"/><circle cx="${x}" cy="${t}" r="2.4" fill="#d9c48f"/>`; },
+  tulip: (x, b, h, c) => { const t = b - h; return stem(x, b, t, -4) + leafAt(x - 1, b - h * .35) +
     `<path d="M${x - 7} ${t + 1}Q${x - 8} ${t - 11} ${x - 3.5} ${t - 13}L${x} ${t - 7}L${x + 3.5} ${t - 13}Q${x + 8} ${t - 11} ${x + 7} ${t + 1}Q${x} ${t + 7} ${x - 7} ${t + 1}Z" fill="${c}"/>`; },
-  daisy: (x, b, h) => { const t = b - h; let p = ""; for (let i = 0; i < 8; i++) p += `<ellipse cx="${x}" cy="${t - 5.5}" rx="2.4" ry="5.2" transform="rotate(${i * 45} ${x} ${t})" fill="#fbf7ee"/>`;
-    return stem(x, b, t, 4) + halo(x, t, "#fff6d6") + p + `<circle cx="${x}" cy="${t}" r="3" fill="#ffc94d"/>`; },
+  daisy: (x, b, h) => { const t = b - h; let p = ""; for (let i = 0; i < 8; i++) p += `<ellipse cx="${x}" cy="${t - 5.5}" rx="2.4" ry="5.2" transform="rotate(${i * 45} ${x} ${t})" fill="#f4f1e6"/>`;
+    return stem(x, b, t, 4) + p + `<circle cx="${x}" cy="${t}" r="3" fill="#f2c14e"/>`; },
   bluebell: (x, b, h) => { const t = b - h; let bells = "";
-    [[.2, 2], [.55, 9], [.85, 16]].forEach(([f, d]) => { const bx = x + 13 * f + 3, by = t + d + 6; bells += halo(bx, by, "#8ea2ff", 7) + `<path d="M${bx - 4.5} ${by}q4.5 -9 9 0l1 3.5q-5.5 -2 -11 0z" fill="#8ea2ff"/>`; });
+    [[.2, 2], [.55, 9], [.85, 16]].forEach(([f, d]) => { const bx = x + 13 * f + 3, by = t + d + 6; bells += `<path d="M${bx - 4.5} ${by}q4.5 -9 9 0l1 3.5q-5.5 -2 -11 0z" fill="#8ea2ff"/>`; });
     return `<path d="M${x} ${b}Q${x - 2} ${t + 8} ${x + 15} ${t + 2}" stroke="${P.leaf}" stroke-width="2" fill="none"/>` + bells; },
-  lavender: (x, b, h) => { const t = b - h; let d = ""; for (let i = 0; i < 6; i++) d += `<ellipse cx="${x + (i % 2 ? 2.2 : -2.2)}" cy="${t + i * 4.5}" rx="2.6" ry="3.6" fill="#b39cff"/>`;
-    return stem(x, b, t + 26, 1) + `<path d="M${x} ${t + 26}V${t}" stroke="${P.leaf}" stroke-width="1.6"/>` + halo(x, t + 10, "#b39cff") + d; },
-  sunflower: (x, b, h) => { const t = b - h - 12; let p = ""; for (let i = 0; i < 12; i++) p += `<ellipse cx="${x}" cy="${t - 8}" rx="3" ry="6.5" transform="rotate(${i * 30} ${x} ${t})" fill="#ffcf5a"/>`;
-    return stem(x, b, t, 5) + leafAt(x + 1, b - h * .45, 1.2) + halo(x, t, "#ffcf5a", 14) + p + `<circle cx="${x}" cy="${t}" r="5.5" fill="#6e4a2e"/>`; },
-  poppy: (x, b, h) => { const t = b - h; return stem(x, b, t, -5) + halo(x, t - 3, "#ff7a6b") +
-    `<g fill="#ff7a6b"><circle cx="${x - 5}" cy="${t - 2}" r="6"/><circle cx="${x + 5}" cy="${t - 2}" r="6"/><circle cx="${x}" cy="${t - 7}" r="6"/></g><circle cx="${x}" cy="${t - 3}" r="2.4" fill="#2b1d1d"/>`; },
+  lavender: (x, b, h) => { const t = b - h; let d = ""; for (let i = 0; i < 6; i++) d += `<ellipse cx="${x + (i % 2 ? 2.2 : -2.2)}" cy="${t + i * 4.5}" rx="2.6" ry="3.6" fill="#a98be0"/>`;
+    return stem(x, b, t + 26, 1) + `<path d="M${x} ${t + 26}V${t}" stroke="${P.leaf}" stroke-width="1.6"/>` + d; },
+  sunflower: (x, b, h) => { const t = b - h - 12; let p = ""; for (let i = 0; i < 12; i++) p += `<ellipse cx="${x}" cy="${t - 8}" rx="3" ry="6.5" transform="rotate(${i * 30} ${x} ${t})" fill="#f2c14e"/>`;
+    return stem(x, b, t, 5) + leafAt(x + 1, b - h * .45, 1.2) + p + `<circle cx="${x}" cy="${t}" r="5.5" fill="#6e4a2e"/>`; },
+  poppy: (x, b, h) => { const t = b - h; return stem(x, b, t, -5) +
+    `<g fill="#f2603a"><circle cx="${x - 5}" cy="${t - 2}" r="6"/><circle cx="${x + 5}" cy="${t - 2}" r="6"/><circle cx="${x}" cy="${t - 7}" r="6"/></g><circle cx="${x}" cy="${t - 3}" r="2.4" fill="#2b1d1d"/>`; },
   fern: (x, b, h) => { const t = b - h; let l = "";
-    for (let i = 0; i < 7; i++) { const y = b - (i + 1) * h / 8, len = 11 - i * 1.2, s = i % 2 ? 1 : -1; l += `<ellipse cx="${x + s * len / 2}" cy="${y}" rx="${len / 2}" ry="2.3" transform="rotate(${s * -25} ${x + s * len / 2} ${y})" fill="#79cf9a"/>`; }
+    for (let i = 0; i < 7; i++) { const y = b - (i + 1) * h / 8, len = 11 - i * 1.2, s = i % 2 ? 1 : -1; l += `<ellipse cx="${x + s * len / 2}" cy="${y}" rx="${len / 2}" ry="2.3" transform="rotate(${s * -25} ${x + s * len / 2} ${y})" fill="#79c48c"/>`; }
     return `<path d="M${x} ${b}Q${x + 3} ${(b + t) / 2} ${x - 1} ${t}" stroke="${P.leaf}" stroke-width="2" fill="none"/>` + l; }
 };
 /* Sun and moon travel across the sky using the device's clock.
-   Sun: rises 6:00 on the left, highest at 13:00, sets 20:00 on the right.
-   Moon: rises 20:00, sets 6:00, same arc. Hills are drawn on top, so rising/setting looks natural. */
+   Sun: rises 6:00 on the left, highest at 13:00, sets 20:00 on the right. Moon: 20:00 to 6:00, same arc. */
 const SUNRISE = 6, SUNSET = 20;
 function celestial(now = new Date()) {
   const h = now.getHours() + now.getMinutes() / 60;
   const up = h >= SUNRISE && h < SUNSET;
   const f = up ? (h - SUNRISE) / (SUNSET - SUNRISE) : (((h - SUNSET) + 24) % 24) / (24 - (SUNSET - SUNRISE));
-  const lift = Math.sin(Math.PI * f);                 // 0 at horizon, 1 at the top
-  // Stars: invisible in daylight, fade in during the last ~1.5 h before sunset and out after sunrise.
+  const lift = Math.sin(Math.PI * f);
   const toEdge = up ? Math.min(h - SUNRISE, SUNSET - h) : 0;
   const stars = up ? Math.max(0, 1 - toEdge / 1.5) * 0.6 : 1;
-  return { sun: up, x: 24 + 352 * f, y: 182 - 140 * lift, r: up ? 21 + 9 * (1 - lift) : 17, stars };
+  return { sun: up, x: 24 + 352 * f, y: 112 - 92 * lift, r: up ? 14 + 6 * (1 - lift) : 11, stars };
 }
-function drawGarden() {
+// Skyline band: sky, stars, sun or moon, rooftops with a water tower, the chain-link fence and the lot's unlocked extras.
+function drawSkyline() {
   const t = tod(); P = SKY[t]; GLOW = t === "night" || t === "dusk";
-  const n = S.plants.length, has = k => n >= k, night = t === "night", sky = celestial();
+  const n = S.plants.length, has = k => n >= k, sky = celestial();
   let s = `<defs>
     <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.top}"/><stop offset="1" stop-color="${P.bot}"/></linearGradient>
-    <radialGradient id="gSun"><stop offset="0" stop-color="${P.sun}" stop-opacity=".85"/><stop offset="1" stop-color="${P.sun}" stop-opacity="0"/></radialGradient>
-    <linearGradient id="gPond" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.top}"/><stop offset="1" stop-color="${P.bot}"/></linearGradient>
-    <filter id="soft" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
-    <filter id="blurBig" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
-    <mask id="moonMask"><rect width="400" height="300" fill="#fff"/><circle cx="${sky.x + 8}" cy="${sky.y - 6}" r="${sky.r * .95}" fill="#000"/></mask>
-  </defs><rect width="400" height="300" fill="url(#gSky)"/>`;
+    <mask id="moonMask"><rect width="400" height="150" fill="#fff"/><circle cx="${sky.x + 6}" cy="${sky.y - 4}" r="${sky.r * .95}" fill="#000"/></mask>
+    <pattern id="chain" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 4L4 0L8 4L4 8Z" fill="none" stroke="${GLOW ? "#4a4f57" : "#7b8288"}" stroke-width=".8"/></pattern>
+  </defs><rect width="400" height="150" fill="url(#gSky)"/>`;
   if (sky.stars > 0) {
     let st = "";
-    for (let i = 0; i < 90; i++) {
-      const x = (i * 97.31 + (i % 7) * 13) % 400, y = (i * 53.71) % 205, base = .3 + (i % 5) * .14;
-      st += `<circle class="twinkle" style="animation-delay:${-(i % 9) * .7}s;animation-duration:${3 + (i % 4)}s" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${i % 6 ? .7 + (i % 3) * .25 : 1.5}" fill="#fff" opacity="${base.toFixed(2)}"/>`;
+    for (let i = 0; i < 70; i++) {
+      const x = (i * 97.31 + (i % 7) * 13) % 400, y = (i * 53.71) % 110, base = .3 + (i % 5) * .14;
+      st += `<circle class="twinkle" style="animation-delay:${-(i % 9) * .7}s;animation-duration:${3 + (i % 4)}s" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${i % 6 ? .6 + (i % 3) * .25 : 1.3}" fill="#fff" opacity="${base.toFixed(2)}"/>`;
     }
-    // a few brighter stars with a soft four-point glint
-    [[58, 34], [214, 22], [352, 96], [132, 118]].forEach(([x, y]) => st += `<g opacity=".9"><circle cx="${x}" cy="${y}" r="4" fill="#fff" opacity=".25" filter="url(#soft)"/><path d="M${x} ${y - 5}L${x + .8} ${y}L${x} ${y + 5}L${x - .8} ${y}ZM${x - 5} ${y}L${x} ${y + .8}L${x + 5} ${y}L${x} ${y - .8}Z" fill="#fff"/></g>`);
     s += `<g opacity="${sky.stars.toFixed(2)}">${st}</g>`;
   }
-  if (has(36)) s += `<g opacity="${night ? .6 : GLOW ? .4 : .18}" filter="url(#blurBig)" fill="none" stroke-width="16" stroke-linecap="round">
-      <path d="M-20 92C70 40 170 112 250 62S370 38 430 76" stroke="#7fe0bd"/><path d="M-20 120C90 80 180 140 270 96S380 80 430 104" stroke="#b6a4ff" stroke-width="10"/></g>`;
-  const bodyColor = sky.sun ? P.sun : "#f2efdc";
-  s += `<circle cx="${sky.x}" cy="${sky.y}" r="${sky.r * 3.2}" fill="url(#gSun)"/>`;
-  s += sky.sun ? `<circle cx="${sky.x}" cy="${sky.y}" r="${sky.r}" fill="${bodyColor}"/>` : `<circle cx="${sky.x}" cy="${sky.y}" r="${sky.r}" fill="${bodyColor}" mask="url(#moonMask)"/>`;
-  s += `<path d="M0 172C80 132 160 152 222 146S340 158 400 170V300H0Z" fill="${P.hills[0]}"/>`;
-  if (has(10)) s += `<rect x="61" y="146" width="6" height="48" rx="2" fill="${P.deco}"/><circle cx="64" cy="138" r="22" fill="${P.deco}"/><circle cx="48" cy="152" r="15" fill="${P.deco}"/><circle cx="81" cy="150" r="16" fill="${P.deco}"/>`;
-  s += `<path d="M0 202C70 176 150 196 232 183S350 170 400 190V300H0Z" fill="${P.hills[1]}"/>`;
-  s += `<path d="M0 230C90 215 190 228 282 219S372 214 400 222V300H0Z" fill="${P.hills[2]}"/>`;
-  if (has(21)) for (let k = 0; k < 7; k++) { const f = k / 6; s += `<ellipse cx="${188 + 42 * f + Math.sin(f * 3) * 10}" cy="${296 - 68 * f}" rx="${11 - 5 * f}" ry="${3.8 - 1.7 * f}" fill="#fff" opacity="${night ? .08 : .18}"/>`; }
-  if (has(6)) s += `<ellipse cx="306" cy="262" rx="52" ry="11" fill="url(#gPond)" opacity=".92"/><path d="M272 260h22M314 266h18" stroke="#fff" stroke-opacity=".35" stroke-width="1.6" stroke-linecap="round"/>`;
-  if (has(28)) s += `<g fill="${P.deco}"><rect x="178" y="212" width="46" height="4" rx="2"/><rect x="178" y="203" width="46" height="3.5" rx="1.75"/><rect x="182" y="216" width="3" height="10"/><rect x="217" y="216" width="3" height="10"/></g>`;
-  if (has(3)) s += `<rect x="355" y="194" width="3" height="36" rx="1.5" fill="${P.deco}"/><circle cx="356.5" cy="191" r="${GLOW ? 26 : 14}" fill="#ffd27a" opacity="${GLOW ? .35 : .18}" filter="url(#soft)"/><rect x="349.5" y="182" width="14" height="14" rx="4" fill="#ffd27a"/>`;
-  const off = Math.max(0, S.plants.length - 52);
-  const shown = S.plants.slice(-52).map((p, i) => ({ ...p, idx: off + i, ...plantSpot(p, i) }))
-    .filter(p => p.pos || !(has(6) && p.x > 250 && p.x < 362 && p.b > 246 && p.b < 276)).sort((a, b) => a.b - b.b);
-  s += shown.map(p => { const h = p.h * 0.62, sel = p.idx === selPlant;
-    return `<g class="pl" data-i="${p.idx}">${sel ? `<ellipse cx="${p.x}" cy="${p.b + 1}" rx="15" ry="4.5" fill="#fff" opacity=".55"/>` : ""}${(PLANT[ACTS[p.k]?.plant] || PLANT.daisy)(p.x, p.b, h, COLORS[p.c].v)}<rect x="${p.x - 12}" y="${p.b - h - 20}" width="24" height="${h + 24}" fill="transparent"/></g>`; }).join("");
-  if (has(15)) s += [[90, 200], [150, 168], [240, 190], [300, 150], [340, 210], [60, 160], [200, 140]].map(([x, y], i) =>
-    `<g class="amb" style="animation-delay:${-i * 1.3}s;animation-duration:${6 + i % 3}s"><circle cx="${x}" cy="${y}" r="6" fill="#ffe27a" opacity="${GLOW ? .35 : .12}" filter="url(#soft)"/><circle cx="${x}" cy="${y}" r="1.6" fill="#fff6c8" opacity="${GLOW ? 1 : .5}"/></g>`).join("");
+  if (has(36)) s += `<g opacity="${GLOW ? .5 : .2}" fill="none" stroke-linecap="round"><path d="M-20 40C70 10 170 58 250 26S370 14 430 34" stroke="#79c48c" stroke-width="10"/><path d="M-20 58C90 32 180 70 270 46S380 38 430 52" stroke="#a98be0" stroke-width="6"/></g>`;
+  s += sky.sun ? `<circle cx="${sky.x}" cy="${sky.y}" r="${sky.r}" fill="${P.sun}"/>` : `<circle cx="${sky.x}" cy="${sky.y}" r="${sky.r}" fill="${P.sun}" mask="url(#moonMask)"/>`;
+  // far rooftops
+  s += `<path d="M0 104h30v-18h22v10h26v-26h18v26h34v-14h26v22h40v-30h20v30h30v-12h36v16h34v-22h28v20h36V150H0Z" fill="${P.far}"/>`;
+  // near rooftops with a water tower and lit windows after dark
+  s += `<g fill="${P.city}"><path d="M0 120h56v-30h40v30h22v-16h50v16h46v-40h42v40h34v-24h60v24h50V150H0Z"/>
+    <rect x="236" y="56" width="22" height="18" rx="2"/><path d="M234 56l13-9 13 9z"/><rect x="239" y="74" width="2" height="8"/><rect x="253" y="74" width="2" height="8"/></g>`;
+  if (P.lit) { let w = ""; [[64, 98], [80, 106], [176, 110], [222, 90], [232, 102], [270, 96], [312, 108], [350, 112], [366, 104], [104, 112]].forEach(([x, y]) => w += `<rect x="${x}" y="${y}" width="5" height="6" fill="#f2c14e" opacity=".8"/>`); s += w; }
+  if (has(10)) s += `<rect x="340" y="104" width="5" height="34" fill="#5a4330"/><circle cx="342" cy="96" r="16" fill="${P.leaf}"/><circle cx="330" cy="104" r="11" fill="${P.leaf}"/><circle cx="354" cy="104" r="11" fill="${P.leaf}"/>`;
+  // ground strip and chain-link fence
+  s += `<rect y="128" width="400" height="22" fill="${GLOW ? "#1b1d20" : "#3a3d40"}"/><rect y="112" width="400" height="18" fill="url(#chain)"/><path d="M0 112H400" stroke="${GLOW ? "#4a4f57" : "#7b8288"}" stroke-width="1.5"/>`;
+  for (let x = 20; x < 400; x += 60) s += `<rect x="${x}" y="110" width="2.5" height="20" fill="${GLOW ? "#4a4f57" : "#7b8288"}"/>`;
+  if (has(6)) s += `<rect x="18" y="122" width="22" height="22" rx="3" fill="#2f5b7a"/><path d="M18 128h22M18 138h22" stroke="#24465f" stroke-width="2"/>`;
+  if (has(28)) s += `<g fill="#8a6440"><rect x="150" y="132" width="44" height="4" rx="1"/><rect x="150" y="125" width="44" height="3.5" rx="1"/><rect x="153" y="136" width="3" height="8"/><rect x="188" y="136" width="3" height="8"/></g>`;
+  if (has(3)) { s += `<path d="M0 106Q100 122 200 106T400 106" fill="none" stroke="#2a2a2a" stroke-width="1"/>`; for (let x = 16; x < 400; x += 32) { const y = 106 + 8 * Math.sin((x / 400) * Math.PI * 2) * (x < 200 ? 1 : -1) * .9; s += `<circle cx="${x}" cy="${(y + 2).toFixed(1)}" r="2.2" fill="#f2c14e" opacity="${GLOW ? 1 : .55}"/>`; } }
+  if (has(15) && GLOW) s += [[60, 96], [130, 88], [210, 100], [290, 84], [360, 94]].map(([x, y], i) => `<circle class="amb" style="animation-delay:${-i * 1.3}s" cx="${x}" cy="${y}" r="1.8" fill="#f6eaa0"/>`).join("");
   $("#garden").innerHTML = s;
+  $("#todChip").innerHTML = `${icon(GLOW ? "moon" : "sun")}${P.label}`;
+}
+const bedOrder = () => { const o = Array.isArray(S.bedOrder) && S.bedOrder.length === 9 && BED_DEFAULT.every(k => S.bedOrder.includes(k)) ? S.bedOrder : BED_DEFAULT.slice(); S.bedOrder = o; return o; };
+const plantsOf = k => S.plants.filter(p => p.k === k);
+function bedArt(k) {
+  if (k === "library") return `<g stroke="#f1efe8" stroke-width="2" fill="none" stroke-linejoin="round"><path d="M28 12h18a6 6 0 0 1 6 6v30a6 6 0 0 0-6-6H28z"/><path d="M76 12H58a6 6 0 0 0-6 6v30a6 6 0 0 1 6-6h18z"/></g>`;
+  const ps = plantsOf(k).slice(-9);
+  if (!ps.length) return `<circle cx="52" cy="34" r="8" fill="none" stroke="#8d7a63" stroke-width="2" stroke-dasharray="3 4"/>`;
+  return ps.map((p, i) => { const col = i % 3, row = Math.floor(i / 3), x = 22 + col * 30 + (row % 2) * 6, b = 58 - row * 4, h = 18 + (p.h - 46) * 0.2 - row * 2;
+    return PLANT[ACTS[k].plant](x, b, h, COLORS[p.c].v); }).join("");
+}
+let selBed = null, swapFrom = null;
+function drawLot() {
+  drawSkyline();
+  const order = bedOrder(), sug = suggestion(), n = S.plants.length;
+  $("#lot").innerHTML = order.map((k, i) => {
+    const num = String(i + 1).padStart(2, "0"), lib = k === "library", count = lib ? 0 : plantsOf(k).length, last = !lib && count ? plantsOf(k).at(-1).t : 0;
+    const name = lib ? "Your week" : ACTS[k].name;
+    const label = `Plot ${num}, ${name}${lib ? ", patterns from your week" : `, ${count} plant${count === 1 ? "" : "s"}${last ? `, last on ${new Date(last).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""}`}${sug.bed === k ? ". Suggested next" : ""}`;
+    return `<button class="bed${sug.bed === k ? " suggest" : ""}${selBed === k ? " sel" : ""}${swapFrom === k ? " swapping" : ""}${lib ? " lib" : ""}" data-bed="${k}" aria-label="${esc(label)}" aria-pressed="${selBed === k}">
+      <span class="bed-no" aria-hidden="true">${num}</span><span class="soil" aria-hidden="true"><svg viewBox="0 0 104 62">${bedArt(k)}</svg></span><span class="bed-name" aria-hidden="true">${name}${!lib && count ? ` · ${count}` : ""}</span></button>`;
+  }).join("");
+  $$("#lot .bed").forEach(b => b.onclick = () => bedTap(b.dataset.bed));
   $("#plantChip").innerHTML = `${icon("leaf")}${n} plant${n === 1 ? "" : "s"}`;
-  $("#todChip").innerHTML = `${icon(t === "night" || t === "dusk" ? "moon" : "sun")}${P.label}`;
   const next = MILESTONES.find(m => m.n > n), prev = [...MILESTONES].reverse().find(m => m.n <= n)?.n || 0;
-  $("#nextName").innerHTML = next ? `Next unlock · <b>${next.name}</b>` : "<b>Garden complete</b>";
-  $("#nextLeft").textContent = next ? `${next.n - n} more` : `${n} plants`;
+  $("#nextName").innerHTML = next ? `Next for the lot: <b>${next.name}</b>` : "<b>Every lot extra unlocked</b>";
+  $("#nextLeft").textContent = next ? `${next.n - n} more plant${next.n - n === 1 ? "" : "s"}` : `${n} plants`;
   $("#nextBar").style.width = next ? `${((n - prev) / (next.n - prev)) * 100}%` : "100%";
+  renderSign();
+}
+function bedTap(k) {
+  if (swapFrom && swapFrom !== k) {
+    const o = bedOrder(), a = o.indexOf(swapFrom), b = o.indexOf(k); [o[a], o[b]] = [o[b], o[a]]; S.bedOrder = o; save();
+    swapFrom = null; selBed = k; tone(587, .2); drawLot(); $(`#lot .bed[data-bed="${k}"]`)?.focus(); note("Plots swapped", "Your lot is arranged the way you like."); return;
+  }
+  swapFrom = null; selBed = selBed === k ? null : k; tone(523, .12); drawLot(); $(`#lot .bed[data-bed="${k}"]`)?.focus();
+}
+// The plot sign under the lot: the suggested next action, or the story of the plot you tapped.
+function renderSign() {
+  const box = $("#plotSign");
+  if (swapFrom) {
+    box.className = "sign swap";
+    box.innerHTML = `<p class="sign-plot">Swapping plot ${String(bedOrder().indexOf(swapFrom) + 1).padStart(2, "0")}</p><h2>Tap another plot to swap places</h2><button class="btn" id="swapCancel">Cancel</button>`;
+    $("#swapCancel").onclick = () => { swapFrom = null; drawLot(); }; return;
+  }
+  if (selBed) {
+    const k = selBed, num = String(bedOrder().indexOf(k) + 1).padStart(2, "0");
+    if (k === "library") {
+      box.className = "sign"; box.innerHTML = `<p class="sign-plot">Plot ${num} · Your week</p><h2>See what seems to help you</h2><div class="sign-actions"><button class="btn go" id="signGo">Open Your week</button><button class="btn" id="signSwap">Swap plot</button></div>`;
+    } else {
+      const ps = plantsOf(k), a = ACTS[k];
+      const rows = ps.slice(-3).reverse().map(p => `<li>${PLANT_NAME[a.plant]} from ${a.why}<span>${p.t ? new Date(p.t).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "Before plant stories began"}</span></li>`).join("");
+      box.className = "sign";
+      box.innerHTML = `<p class="sign-plot">Plot ${num} · ${a.name}</p><h2>${ps.length ? `${ps.length} ${PLANT_NAME[a.plant].toLowerCase()}${ps.length === 1 ? "" : "s"} growing` : "Nothing planted yet"}</h2>
+        ${rows ? `<ul class="story">${rows}</ul>` : `<p class="muted">Finish ${a.why} to plant the first one here.</p>`}
+        <div class="sign-actions"><button class="btn go" id="signGo">Go to ${a.name}</button><button class="btn" id="signSwap">Swap plot</button></div>`;
+    }
+    $("#signGo").onclick = () => show(k === "library" ? "insights" : ["sort", "pattern", "fireflies", "rake"].includes(k) ? k : k);
+    $("#signSwap").onclick = () => { swapFrom = k; selBed = null; drawLot(); $("#lot .bed")?.focus(); };
+    return;
+  }
+  const g = suggestion();
+  box.className = "sign next";
+  box.innerHTML = `<p class="sign-plot">Up next · ${g.where}</p><h2>${esc(g.title)}</h2><p class="muted">${g.sub}</p><button class="btn go block" id="signGo">${g.label}</button>`;
+  $("#signGo").onclick = g.run;
+}
+// One suggested next action, from today's list, the last check-in, the time of day and the setup answers.
+function suggestion() {
+  const h = new Date().getHours(), st = S.path.steps, nx = S.path.done.findIndex(d => !d);
+  const last = S.feelLog.at(-1), lastToday = last && today(new Date(last.t)) === today() ? last : null;
+  const tiny = S.fsteps.find(s => !s.done)?.t || S.ftask;
+  const focus2 = { bed: "focus", where: "Focus", title: tiny ? tiny : "Start one small thing", sub: "Two minutes is enough to begin. Stop after that if you want.", label: "Start two minutes", run: () => { S.focusMin = 2; save(); show("focus"); } };
+  if (lastToday && lastToday.s === 2 && ["low", "overwhelmed", "anxious", "drained"].includes(lastToday.f))
+    return { bed: "breathe", where: "Breathe", title: "Slow down for a minute", sub: "You checked in feeling a lot today. Three slow breaths first.", label: "Breathe slowly", run: () => { S.bpat = 0; S.breaths = 3; save(); show("breathe"); } };
+  if (lastToday && lastToday.f === "stuck") return focus2;
+  if (st.length && nx >= 0) return { bed: "path", where: "Today", title: st[nx].t, sub: `Step ${nx + 1} of ${st.length} on today's list. Just this one.`, label: "Open today's list", run: () => show("path") };
+  if (h >= 20 || h < 5) return { bed: "breathe", where: "Breathe", title: "Wind down", sub: "A minute of slow breathing before sleep.", label: "Breathe for a minute", run: () => { S.bpat = 2; S.breaths = 3; save(); show("breathe"); } };
+  if (!lastToday && h < 12) return { bed: "feelings", where: "Check in", title: "How are you starting the day?", sub: "Thirty seconds. It shapes what Quietroot suggests.", label: "Check in", run: () => show("feelings") };
+  if (S.goals.includes("routine") && !st.length) return { bed: "path", where: "Today", title: "Plan today in a few steps", sub: "Seeing the order makes starting easier.", label: "Plan today", run: () => show("path") };
+  if (S.goals.includes("calm") && !S.goals.includes("focus")) return { bed: "breathe", where: "Breathe", title: "One calm minute", sub: "Follow the circle for a few slow breaths.", label: "Breathe for a minute", run: () => show("breathe") };
+  return focus2;
 }
 
 /* ================= growing & toast ================= */
@@ -319,79 +386,77 @@ function grow(kind) {
   S.today[kind] = true;
   if (!S.days.includes(today())) { S.days.push(today()); S.days = S.days.slice(-60); }
   save(); chime();
-  const n = S.plants.length, m = MILESTONES.find(x => x.n === n), plant = PLANT_NAME[ACTS[kind].plant];
+  const n = S.plants.length, m = MILESTONES.find(x => x.n === n), plant = PLANT_NAME[ACTS[kind].plant], num = String(bedOrder().indexOf(kind) + 1).padStart(2, "0");
   const el = $("#toast");
-  el.innerHTML = `<span class="ti">${icon(m ? "sparkle" : "leaf")}</span><div><b>${m ? `Unlocked: ${m.name}` : `${plant} planted`}</b><span>${m ? `${plant} planted · see your garden` : "Added to your garden"}</span></div>`;
+  el.innerHTML = `<span class="ti">${icon(m ? "sparkle" : "leaf")}</span><div><b>${m ? `New for the lot: ${m.name}` : `${plant} planted in plot ${num}`}</b><span>${m ? `${plant} planted in plot ${num}` : "Added to your lot"}</span></div>`;
   el.classList.remove("hidden"); el.style.animation = "none"; el.offsetHeight; el.style.animation = "";
   clearTimeout(grow.t); grow.t = setTimeout(() => el.classList.add("hidden"), m ? 5000 : 3200);
 }
 
 /* ================= navigation ================= */
-const SCREENS = ["welcome", "quiet", "insights", "home", "focus", "breathe", "path", "feelings", "sort", "pattern", "fireflies", "rake", "settings"];
-const TABS = { home: ["Garden", "home"], focus: ["Focus", "focus"], breathe: ["Breathe", "breathe"], path: ["Today", "path"], settings: ["Settings", "settings"] };
+const SCREENS = ["welcome", "quiet", "insights", "unwind", "home", "focus", "breathe", "path", "feelings", "sort", "pattern", "fireflies", "rake", "settings"];
+const TABS = { home: ["Lot", "home"], focus: ["Focus", "focus"], breathe: ["Breathe", "breathe"], path: ["Today", "path"], settings: ["Settings", "settings"] };
 let current = "home";
 function show(id) {
   if (current === "breathe" && id !== "breathe") stopBreath();
   if (current === "fireflies") ff.active = false;
-  current = id; selPlant = -1; moving = false;
+  current = id; selBed = null; swapFrom = null;
   $$(".after").forEach(el => el.remove());
   document.body.classList.toggle("no-tabs", id === "welcome" || id === "quiet");
   SCREENS.forEach(s => $(`#s-${s}`).classList.toggle("hidden", s !== id));
-  ({ welcome: () => renderWelcome(0), quiet: () => {}, insights: renderInsights, home: renderHome, focus: initFocus, breathe: initBreath, path: renderPath, feelings: startFeelings, sort: () => startSort(0), pattern: newBed, fireflies: startFireflies, rake: initSand, settings: renderSettings }[id])();
+  ({ welcome: () => renderWelcome(0), quiet: () => {}, insights: renderInsights, unwind: renderUnwind, home: renderHome, focus: initFocus, breathe: initBreath, path: renderPath, feelings: startFeelings, sort: () => startSort(0), pattern: newBed, fireflies: startFireflies, rake: initSand, settings: renderSettings }[id])();
   const tab = TABS[id] ? id : "home";
   $$(".tab").forEach(b => b.dataset.tab === tab ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
   window.scrollTo(0, 0);
+  const h = $(`#s-${id} h1, #s-${id} h2`); if (h && id !== "home") { h.tabIndex = -1; h.focus({ preventScroll: true }); }
 }
-$$(".tab").forEach(b => { const [label, ic] = TABS[b.dataset.tab]; b.innerHTML = icon(ic) + label; b.onclick = () => show(b.dataset.tab); });
-$$("[data-home]").forEach(b => { b.innerHTML = icon("back"); b.onclick = () => show("home"); });
+$$(".tab").forEach(b => { const [label, ic] = TABS[b.dataset.tab]; b.innerHTML = icon(ic) + `<span>${label}</span>`; b.onclick = () => show(b.dataset.tab); });
+$$("[data-home]").forEach(b => { b.innerHTML = icon("back"); b.setAttribute("aria-label", b.dataset.home === "unwind" ? "Back to Unwind" : "Back to the lot"); b.onclick = () => show(b.dataset.home || "home"); });
 $$("[data-go]").forEach(b => b.onclick = () => show(b.dataset.go));
+// Guiding captions are announced to screen readers when they change.
+$$("[data-say]").forEach(el => { el.setAttribute("aria-live", "polite"); el.setAttribute("role", "status"); });
 const say = (id, html) => { const el = $(`#s-${id} [data-say]`); if (el) el.innerHTML = html; };
 
-/* ================= home ================= */
+/* ================= home: the lot + one next thing ================= */
 const TILE_ART = {
-  sort: `<circle cx="52" cy="58" r="17" fill="#ff8a7a"/><rect x="88" y="34" width="32" height="32" rx="9" fill="#7cc4ff"/><path d="M70 74l16 17-16 17-16-17z" fill="#ffd166"/><circle cx="46" cy="52" r="5" fill="#fff" opacity=".35"/>`,
-  pattern: (() => { let s = ""; const g = [0, -1, 2, 1, 0, -1, -1, 3, 0]; g.forEach((c, i) => { const x = 40 + (i % 3) * 30, y = 26 + Math.floor(i / 3) * 30; s += `<rect x="${x}" y="${y}" width="24" height="24" rx="7" fill="#fff" opacity=".12"/>` + (c >= 0 ? `<circle cx="${x + 12}" cy="${y + 12}" r="7" fill="${COLORS[c].v}"/>` : ""); }); return s; })(),
-  fireflies: `<rect x="62" y="44" width="46" height="58" rx="14" fill="#fff" opacity=".1" stroke="#fff" stroke-opacity=".45" stroke-width="2"/><rect x="68" y="36" width="34" height="9" rx="4" fill="#fff" opacity=".35"/>` +
-    [[80, 70], [94, 84], [84, 92], [128, 40], [40, 56], [132, 92]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="#ffe27a" opacity=".35" filter="url(#tileSoft)"/><circle cx="${x}" cy="${y}" r="2.2" fill="#fff6c8"/>`).join(""),
-  rake: `${[0, 9, 18, 27].map(o => `<path d="M0 ${42 + o}C40 ${24 + o} 70 ${64 + o} 170 ${34 + o}" stroke="#fff" stroke-opacity=".28" stroke-width="2.4" fill="none"/>`).join("")}<ellipse cx="104" cy="66" rx="19" ry="13" fill="#4a453e"/><ellipse cx="99" cy="61" rx="8" ry="4" fill="#fff" opacity=".18"/>`
+  sort: `<circle cx="52" cy="58" r="17" fill="#ff8a6b"/><rect x="88" y="34" width="32" height="32" rx="4" fill="#6fb3e8"/><path d="M70 74l16 17-16 17-16-17z" fill="#f2c14e"/>`,
+  pattern: (() => { let s = ""; const g = [0, -1, 2, 1, 0, -1, -1, 3, 0]; g.forEach((c, i) => { const x = 40 + (i % 3) * 30, y = 26 + Math.floor(i / 3) * 30; s += `<rect x="${x}" y="${y}" width="24" height="24" rx="3" fill="#3b2a1a" opacity=".45"/>` + (c >= 0 ? `<circle cx="${x + 12}" cy="${y + 12}" r="7" fill="${COLORS[c].v}"/>` : ""); }); return s; })(),
+  fireflies: `<rect x="62" y="44" width="46" height="58" rx="10" fill="none" stroke="#f1efe8" stroke-opacity=".6" stroke-width="2"/><rect x="68" y="36" width="34" height="9" rx="3" fill="#f1efe8" opacity=".45"/>` +
+    [[80, 70], [94, 84], [84, 92], [128, 40], [40, 56], [132, 92]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.6" fill="#f6eaa0"/>`).join(""),
+  rake: `${[0, 9, 18, 27].map(o => `<path d="M0 ${42 + o}C40 ${24 + o} 70 ${64 + o} 170 ${34 + o}" stroke="#f1efe8" stroke-opacity=".35" stroke-width="2.4" fill="none"/>`).join("")}<ellipse cx="104" cy="66" rx="19" ry="13" fill="#4a453e"/>`
 };
 function renderHome() {
-  drawGarden();
   const h = new Date().getHours();
   $("#greet").textContent = h < 5 ? "Still up?" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : h < 21 ? "Good evening" : "Good night";
   $("#dateLine").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
-  const last = S.feelLog[S.feelLog.length - 1], lf = last && FEEL.find(f => f.id === last.f);
-  $("#checkinCard").innerHTML = `<span class="ic" style="background:color-mix(in srgb,var(--rose) 18%,transparent);color:var(--rose)">${icon("heart")}</span>
-    <span class="tx"><span class="t" style="display:block">How are you feeling?</span><span class="s" style="display:block">${lf ? `Last check-in: ${lf.w}${today(new Date(last.t)) === today() ? " · today" : ""}` : "A 30-second check-in"}</span></span>${icon("chev", "chev")}`;
-  const st = S.path.steps, done = S.path.done.filter(Boolean).length, nx = S.path.done.findIndex(d => !d);
-  $("#todayCard").innerHTML = `<span class="ic" style="background:color-mix(in srgb,var(--sky) 18%,transparent);color:var(--sky)">${icon("path")}</span>
-    <span class="tx"><span class="t" style="display:block">${st.length ? `Today · ${done} of ${st.length} done` : "Plan your day"}</span><span class="s" style="display:block">${st.length ? (nx < 0 ? "All done. Nice." : `Up next: ${esc(st[nx].t)}`) : "Small steps, in order"}</span></span>${icon("chev", "chev")}`;
-  $("#quickFocus").innerHTML = `${icon("focus", "ic")}<span><span class="t" style="display:block">Focus</span><span class="s">${S.focusMin} minute session</span></span>`;
-  $("#quickBreathe").innerHTML = `${icon("breathe", "ic")}<span><span class="t" style="display:block">Breathe</span><span class="s">About 1 minute</span></span>`;
-  $("#quickFocus").onclick = () => show("focus"); $("#quickBreathe").onclick = () => show("breathe");
-  $("#tiles").innerHTML = ["sort", "pattern", "fireflies", "rake"].map(k => `<button class="tile" data-go="${k}" style="--tbg:${ACTS[k].bg}">
-      <svg class="art" viewBox="0 0 170 184" preserveAspectRatio="xMidYMin slice" aria-hidden="true"><defs><filter id="tileSoft" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter></defs>${TILE_ART[k]}</svg>
-      ${S.today[k] ? `<span class="done-badge">${icon("check")}</span>` : ""}<span class="t">${ACTS[k].name}</span><span class="s">${ACTS[k].sub}</span></button>`).join("");
-  $$("#tiles [data-go]").forEach(b => b.onclick = () => show(b.dataset.go));
-  // week
-  const now = new Date(), mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-  let count = 0;
-  $("#week").innerHTML = ["M", "T", "W", "T", "F", "S", "S"].map((l, i) => {
-    const d = new Date(mon); d.setDate(mon.getDate() + i); const on = S.days.includes(today(d)); if (on) count++;
-    return `<div class="day${on ? " on" : ""}${today(d) === today() ? " today" : ""}"><i>${on ? icon("check") : ""}</i>${l}</div>`;
-  }).join("");
-  $("#weekNote").textContent = count ? `${count} day${count === 1 ? "" : "s"} in the garden` : "Any day you visit counts";
-  $("#insightsCard").innerHTML = `<span class="ic" style="background:color-mix(in srgb,var(--lilac) 18%,transparent);color:var(--lilac)">${icon("sparkle")}</span>
-    <span class="tx"><span class="t" style="display:block">Your week</span><span class="s" style="display:block">What seems to help you</span></span>${icon("chev", "chev")}`;
-  // personalise order from the welcome setup
-  const g = S.goals;
-  $("#todayCard").style.order = g.includes("routine") ? -1 : 0;
-  $("#quickFocus").style.order = g.includes("calm") && !g.includes("focus") ? 1 : 0;
-  $("#plantInfo").classList.add("hidden");
-  $("#sceneHint").textContent = S.plants.length ? "Tap a plant to see its story, or move it." : "Finish any activity to grow your first plant.";
-  $("#quietBtn").innerHTML = `${icon("moon")}Quiet`;
+  drawLot();
+  const st = S.path.steps, done = S.path.done.filter(Boolean).length;
+  const last = S.feelLog.at(-1), lf = last && FEEL.find(f => f.id === last.f);
+  $("#qlinks").innerHTML = [
+    ["breathe", "breathe", "Breathe", "1 minute"],
+    ["feelings", "heart", "Check in", lf && today(new Date(last.t)) === today() ? lf.w : "30 seconds"],
+    ["path", "path", "Today", st.length ? `${done} of ${st.length}` : "Plan it"],
+    ["unwind", "sparkle", "Unwind", "4 quiet games"]
+  ].map(([go, ic, t, s]) => `<button class="qlink" data-go="${go}">${icon(ic)}<span><b>${t}</b><small>${esc(s)}</small></span></button>`).join("");
+  $$("#qlinks [data-go]").forEach(b => b.onclick = () => show(b.dataset.go));
+  $("#quietBtn").innerHTML = `${icon("moon")}<span>Quiet</span>`;
   $("#quietBtn").setAttribute("aria-label", "Quiet mode: a simpler screen for hard moments");
   $("#quietBanner").classList.toggle("hidden", !S.quiet);
+}
+function renderUnwind() {
+  $("#tiles").innerHTML = ["sort", "pattern", "fireflies", "rake"].map(k => `<button class="tile" data-go="${k}" style="--tbg:${ACTS[k].bg}">
+      <svg class="art" viewBox="0 0 170 184" preserveAspectRatio="xMidYMin slice" aria-hidden="true">${TILE_ART[k]}</svg>
+      ${S.today[k] ? `<span class="done-badge" aria-label="Done today">${icon("check")}</span>` : ""}<span class="t">${ACTS[k].name}</span><span class="s">${ACTS[k].sub}</span></button>`).join("");
+  $$("#tiles [data-go]").forEach(b => b.onclick = () => show(b.dataset.go));
+}
+function weekStrip() {
+  const now = new Date(), mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  let count = 0;
+  const html = ["M", "T", "W", "T", "F", "S", "S"].map((l, i) => {
+    const d = new Date(mon); d.setDate(mon.getDate() + i); const on = S.days.includes(today(d)); if (on) count++;
+    return `<div class="day${on ? " on" : ""}${today(d) === today() ? " today" : ""}" aria-label="${d.toLocaleDateString(undefined, { weekday: "long" })}${on ? ", visited" : ""}"><i>${on ? icon("check") : ""}</i>${l}</div>`;
+  }).join("");
+  return { html, count };
 }
 
 /* ================= Quiet mode: one tap to a calmer, simpler screen ================= */
@@ -414,34 +479,43 @@ $("#qTiny").onclick = () => { S.focusMin = 2; save(); show("focus"); };
 
 /* ================= Focus ================= */
 const fs = { total: 0, left: 0, endAt: 0, running: false, started: false, iv: null };
-const RING = 2 * Math.PI * 128;
-function drawFocus(p, ringP = p, ringVar = "--mint") {
-  const top = 214 - (12 + 112 * p); let leaves = "";
+// Focus stage: one raised timber bed where the plant grows, and a tape measure that pulls out as time passes.
+function drawFocus(p, tapeP = p, breakMode = false) {
+  const base = 150, top = base - (10 + 104 * p); let leaves = "";
   [0.12, 0.28, 0.44, 0.6, 0.76].forEach((th, i) => {
     if (p < th) return;
-    const g = Math.min(1, (p - th) / 0.12), sd = i % 2 ? 1 : -1, y = 212 - (0.16 + i * 0.15) * (212 - top), L = (24 - i * 2) * g;
-    leaves += `<path d="M150 ${y}q${sd * L * .5} ${-L * .62} ${sd * L} ${-L * .16}q${-sd * L * .45} ${L * .52} ${-sd * L} ${L * .16}z" style="fill:var(--mint)" opacity="${.75 + (i % 2) * .2}"/>`;
+    const g = Math.min(1, (p - th) / 0.12), sd = i % 2 ? 1 : -1, y = base - 2 - (0.16 + i * 0.15) * (base - 2 - top), L = (24 - i * 2) * g;
+    leaves += `<path d="M150 ${y}q${sd * L * .5} ${-L * .62} ${sd * L} ${-L * .16}q${-sd * L * .45} ${L * .52} ${-sd * L} ${L * .16}z" style="fill:var(--kale)"/>`;
   });
   let head = "";
-  if (p >= 1) { for (let i = 0; i < 6; i++) head += `<ellipse cx="150" cy="${top - 10}" rx="6.5" ry="10" transform="rotate(${i * 60} 150 ${top})" fill="#b39cff"/>`; head = `<circle cx="150" cy="${top}" r="30" fill="#b39cff" opacity=".35" filter="url(#fGlow)"/>` + head + `<circle cx="150" cy="${top}" r="6" fill="#ffd27a"/>`; }
-  else if (p > 0.88) head = `<ellipse cx="150" cy="${top - 5}" rx="6" ry="9" fill="#b39cff"/>`;
-  $("#fSvg").innerHTML = `<defs><filter id="fGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="8"/></filter></defs>
-    <circle cx="150" cy="150" r="128" fill="none" style="stroke:var(--surface-2)" stroke-width="10"/>
-    <circle cx="150" cy="150" r="128" fill="none" style="stroke:var(${ringVar})" stroke-width="10" stroke-linecap="round" transform="rotate(-90 150 150)" stroke-dasharray="${RING}" stroke-dashoffset="${RING * (1 - ringP)}"/>
-    <ellipse cx="150" cy="218" rx="56" ry="11" style="fill:var(--surface-2)"/>
-    <path d="M150 216Q154 ${(216 + top) / 2} 150 ${top}" style="stroke:var(--mint)" stroke-width="3.5" fill="none" stroke-linecap="round"/>${leaves}${head}`;
+  if (p >= 1) { for (let i = 0; i < 6; i++) head += `<ellipse cx="150" cy="${top - 10}" rx="6.5" ry="10" transform="rotate(${i * 60} 150 ${top})" fill="#f2603a"/>`; head += `<circle cx="150" cy="${top}" r="6" fill="#2b1d1d"/>`; }
+  else if (p > 0.88) head = `<ellipse cx="150" cy="${top - 5}" rx="6" ry="9" fill="#f2603a"/>`;
+  const tapeW = Math.max(0, Math.min(1, tapeP)) * 214, ticks = Array.from({ length: 22 }, (_, i) => `<path d="M${54 + i * 10} 196v${i % 5 ? 4 : 8}" stroke="#2b2a24" stroke-width="1"/>`).join("");
+  $("#fSvg").innerHTML = `
+    <path d="M150 ${base}Q154 ${(base + top) / 2} 150 ${top}" style="stroke:var(--kale)" stroke-width="3.5" fill="none" stroke-linecap="round"/>${leaves}${head}
+    <rect x="60" y="${base}" width="180" height="12" style="fill:var(--soil)"/>
+    <rect x="52" y="${base + 8}" width="196" height="26" rx="3" style="fill:var(--timber)"/>
+    <path d="M52 ${base + 21}H248" stroke="rgba(0,0,0,.18)" stroke-width="1.5"/>
+    <rect x="22" y="188" width="34" height="30" rx="5" style="fill:var(--orange)"/><circle cx="39" cy="203" r="6" fill="#1c1c1c" opacity=".35"/>
+    <clipPath id="tapeClip"><rect x="54" y="190" width="${tapeW}" height="22"/></clipPath>
+    <g clip-path="url(#tapeClip)"><rect x="54" y="192" width="214" height="18" fill="${breakMode ? "#9cc6e4" : "#e9c23f"}"/>${ticks}</g>
+    <rect x="${54 + tapeW - 3}" y="189" width="5" height="24" rx="1" fill="#2b2a24" opacity="${tapeW > 2 ? 1 : 0}"/>`;
 }
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 function focusUI() {
   const brk = fs.mode === "break", prog = fs.total ? 1 - fs.left / fs.total : 0;
-  if (brk) drawFocus(1, prog, "--sky"); else drawFocus(fs.bloomed && !fs.started ? 1 : prog);
+  if (brk) drawFocus(1, prog, true); else drawFocus(fs.bloomed && !fs.started ? 1 : Math.max(.16, prog), prog);
   $("#fTime").textContent = !fs.started ? mmss(S.focusMin * 60) : S.hideClock ? (brk ? "On a break" : fs.running ? "Growing" : "Paused") : mmss(Math.ceil(fs.left));
   $("#fStart").textContent = !fs.started ? (fs.offerBreak ? "Another session" : "Start") : fs.running ? "Pause" : "Resume";
   $("#fStop").textContent = brk ? "End break" : "Finish early";
   $("#fStop").classList.toggle("hidden", !fs.started);
   $("#fBreak").classList.toggle("hidden", fs.started || !fs.offerBreak);
   $("#fMore").classList.toggle("hidden", fs.started || !fs.offerMore);
-  $("#fControls").classList.toggle("hidden", fs.started);
+  $("#fControls").classList.toggle("hidden", fs.started || !fs.optsOpen);
+  $("#fSummary").classList.toggle("hidden", fs.started);
+  const nextStep = S.fsteps.find(s => !s.done)?.t, taskLine = nextStep || (S.ftask || "").trim();
+  $("#fSummary").setAttribute("aria-expanded", !!fs.optsOpen);
+  $("#fSummary").innerHTML = `<span><b>${S.focusMin} min</b>${taskLine ? ` · ${esc(taskLine)}` : " · No task named"}${S.companion ? " · Companion on" : ""}</span><span class="opt-label">${fs.optsOpen ? "Done" : "Options"}${icon(fs.optsOpen ? "up" : "down")}</span>`;
   $("#fMins").innerHTML = [2, 5, 10, 15, 25, 45].map(m => `<button data-fmin="${m}" aria-pressed="${m === S.focusMin}" aria-label="${m} minutes">${m}</button>`).join("");
   $$("[data-fmin]").forEach(b => b.onclick = () => { S.focusMin = +b.dataset.fmin; save(); focusUI(); });
   $("#fHide").textContent = S.hideClock ? "Show clock" : "Hide clock";
@@ -453,7 +527,7 @@ function focusUI() {
   if (task) $("#fNow").innerHTML = `<span>${fs.mode === "break" ? "Paused for a break" : "Right now"}</span>${esc(task)}`;
 }
 function initFocus() {
-  if (!fs.started) say("focus", "Pick a length and name the one thing you're working on. Can't get going? Break it into tiny steps, or try 2 minutes. You can always keep going after.");
+  if (!fs.started) say("focus", "Press Start when you're ready. Can't get going? Open Options to break it into tiny steps, or pick 2 minutes.");
   $("#fTask").value = S.ftask || "";
   renderSteps(); focusUI();
 }
@@ -495,6 +569,8 @@ function renderSteps() {
   if ($("#fStepsClear")) $("#fStepsClear").onclick = () => { S.fsteps = []; fs.stepsOpen = false; save(); renderSteps(); };
 }
 $("#fTask").oninput = e => { S.ftask = e.target.value; save(); };
+$("#fTask").onchange = () => focusUI();
+$("#fSummary").onclick = () => { fs.optsOpen = !fs.optsOpen; focusUI(); if (fs.optsOpen) $("#fMins button[aria-pressed=true]")?.focus(); };
 $("#fBuddySw").onclick = () => { S.companion = !S.companion; save(); focusUI(); tone(523, .12); };
 $("#fMore").onclick = () => { S.focusMin = 10; fs.offerMore = false; fs.keepStep = true; $("#fStart").click(); };
 function focusEnd(finished) {
@@ -558,14 +634,13 @@ const BPAT = [
 const BRING = 2 * Math.PI * 136;
 let bRun = 0;
 function buildOrb() {
-  $("#bSvg").innerHTML = `<defs>
-      <radialGradient id="orbG" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#e6fff5"/><stop offset=".45" stop-color="#7fe0bd"/><stop offset="1" stop-color="#7fb8ff"/></radialGradient>
-      <filter id="orbGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="16"/></filter></defs>
-    <circle cx="150" cy="150" r="136" fill="none" style="stroke:var(--surface-2)" stroke-width="5"/>
-    <circle id="bRing" cx="150" cy="150" r="136" fill="none" style="stroke:var(--mint)" stroke-width="5" stroke-linecap="round" transform="rotate(-90 150 150)" stroke-dasharray="${BRING}" stroke-dashoffset="${BRING}"/>
-    <g class="orb" id="orb"><circle cx="150" cy="150" r="104" fill="url(#orbG)" opacity=".5" filter="url(#orbGlow)"/><circle cx="150" cy="150" r="96" fill="url(#orbG)"/></g>
-    <text id="bPhase" class="orb-label" x="150" y="146" text-anchor="middle">Ready</text>
-    <text id="bNum" class="orb-num" x="150" y="182" text-anchor="middle"></text>`;
+  $("#bSvg").innerHTML = `
+    <circle cx="150" cy="150" r="136" fill="none" style="stroke:var(--surface-2)" stroke-width="6"/>
+    <circle id="bRing" cx="150" cy="150" r="136" fill="none" style="stroke:var(--orange)" stroke-width="6" transform="rotate(-90 150 150)" stroke-dasharray="${BRING}" stroke-dashoffset="${BRING}"/>
+    <circle cx="150" cy="150" r="112" fill="none" style="stroke:var(--timber)" stroke-width="3" stroke-dasharray="2 8"/>
+    <g class="orb" id="orb"><circle cx="150" cy="150" r="98" style="fill:var(--kale)"/><circle cx="150" cy="150" r="98" fill="none" style="stroke:var(--timber)" stroke-width="8"/></g>
+    <text id="bPhase" class="orb-label" x="150" y="144" text-anchor="middle">Ready</text>
+    <text id="bNum" class="orb-num" x="150" y="186" text-anchor="middle"></text>`;
 }
 function initBreath() {
   stopBreath();
@@ -616,7 +691,8 @@ const STEP = {
   call: ["Call someone", "#7fe0bd"], rest: ["Downtime", "#ff9db3"], bed: ["Wind down", "#b6a4ff"], own: ["", "#ffd27a"]
 };
 const stepIc = k => { const c = (STEP[k] || STEP.own)[1]; return `<span class="ic" style="background:color-mix(in srgb,${c} 20%,transparent);color:${c}">${icon(k === "rest" ? "heart" : k)}</span>`; };
-let pmode = null;
+let pmode = null, pathMore = false;
+$("#moreSteps").onclick = () => { pathMore = !pathMore; renderPath(); };
 function renderPath() {
   const Pp = S.path, steps = Pp.steps;
   if (!pmode) pmode = steps.length ? "walk" : "plan";
@@ -642,8 +718,15 @@ function renderPath() {
     renderPath();
   });
   $$("[data-mv]").forEach(b => b.onclick = () => { const i = +b.dataset.mv, j = i + +b.dataset.d; if (j < 0 || j >= steps.length) return; [steps[i], steps[j]] = [steps[j], steps[i]]; [Pp.done[i], Pp.done[j]] = [Pp.done[j], Pp.done[i]]; save(); renderPath(); });
-  $$("[data-rm]").forEach(b => b.onclick = () => { const i = +b.dataset.rm; steps.splice(i, 1); Pp.done.splice(i, 1); save(); renderPath(); });
-  $("#addgrid").innerHTML = Object.entries(STEP).filter(([k]) => k !== "own").map(([k, [t]]) => `<button class="add" data-add="${k}">${stepIc(k)}${t}</button>`).join("");
+  $$("[data-rm]").forEach(b => b.onclick = () => {
+    const i = +b.dataset.rm, [gone] = steps.splice(i, 1), [wasDone] = Pp.done.splice(i, 1); save(); renderPath();
+    undoable(`Removed "${gone.t}"`, () => { steps.splice(i, 0, gone); Pp.done.splice(i, 0, wasDone); save(); renderPath(); });
+  });
+  const allSteps = Object.entries(STEP).filter(([k]) => k !== "own"), COMMON = ["wake", "meds", "coffee", "work", "move", "bed"];
+  const listed = pathMore ? allSteps : allSteps.filter(([k]) => COMMON.includes(k));
+  $("#moreSteps").textContent = pathMore ? "Fewer steps" : `More steps (${allSteps.length - COMMON.length})`;
+  $("#moreSteps").setAttribute("aria-expanded", pathMore);
+  $("#addgrid").innerHTML = listed.map(([k, [t]]) => `<button class="add" data-add="${k}">${stepIc(k)}${t}</button>`).join("");
   $$("[data-add]").forEach(b => b.onclick = () => addStep(b.dataset.add, STEP[b.dataset.add][0]));
 }
 function addStep(k, t) {
@@ -668,14 +751,30 @@ const FEEL = [
 ];
 const GO_LABEL = { breathe: "Breathe for a minute", path: "Plan one small step", focus: "Try just 2 minutes", quiet: "Switch to quiet mode", rake: "Rake some sand", sort: "Sort for a bit", fireflies: "Watch the fireflies" };
 const dot = (c, size) => `<span class="dot" style="--c:${c};${size ? `width:${size}px;height:${size}px` : ""}"></span>`;
+// Four broad feelings first, then the finer word, so there are never more than four choices at once.
+const FEEL_GROUPS = [
+  { w: "Okay", s: "Calm or content", ids: ["calm", "content"] },
+  { w: "Wired", s: "Restless or anxious", ids: ["restless", "anxious"] },
+  { w: "Heavy", s: "Drained or low", ids: ["drained", "low"] },
+  { w: "Stuck", s: "Overloaded or can't start", ids: ["overwhelmed", "stuck"] }
+];
 let feelPick = null;
 function startFeelings() {
   feelPick = null;
   $("#feelStep1").classList.remove("hidden"); $("#feelStep2").classList.add("hidden"); $("#feelStep3").classList.add("hidden");
   say("feelings", "How are you, honestly? Pick whatever's closest. There's no wrong answer.");
-  $("#moods").innerHTML = FEEL.map((f, i) => `<button class="mood" data-f="${i}">${dot(f.c)}${f.w}</button>`).join("");
-  $$("#moods .mood").forEach(b => b.onclick = () => { feelPick = FEEL[b.dataset.f]; tone(523, .2); askLevel(); });
+  $("#moods").innerHTML = FEEL_GROUPS.map((g, i) => { const c = FEEL.find(f => f.id === g.ids[0]).c;
+    return `<button class="mood" data-g="${i}">${dot(c)}<span><b>${g.w}</b><small>${g.s}</small></span></button>`; }).join("");
+  $$("#moods .mood").forEach(b => b.onclick = () => { tone(523, .15); pickFine(FEEL_GROUPS[b.dataset.g]); });
   renderHistory();
+}
+function pickFine(g) {
+  say("feelings", `<b>${g.w}.</b> Which is closer?`);
+  $("#moods").innerHTML = g.ids.map(id => { const f = FEEL.find(x => x.id === id); return `<button class="mood" data-f="${id}">${dot(f.c)}<span><b>${f.w}</b></span></button>`; }).join("") +
+    `<button class="btn link" id="moodBack">Pick a different feeling</button>`;
+  $$("#moods [data-f]").forEach(b => b.onclick = () => { feelPick = FEEL.find(f => f.id === b.dataset.f); tone(523, .15); askLevel(); });
+  $("#moodBack").onclick = startFeelings;
+  $("#moods [data-f]").focus();
 }
 function askLevel() {
   $("#feelStep1").classList.add("hidden"); $("#feelStep2").classList.remove("hidden");
@@ -689,7 +788,10 @@ function answer(level) {
   const strong = level === 2 && !["calm", "content"].includes(feelPick.id) ? " Strong feelings take a lot of energy. Naming them is a real skill." : "";
   say("feelings", "Thanks for checking in.");
   $("#reply").innerHTML = `${dot(feelPick.c)}<div><b>${feelPick.w}${["", " · moderate", " · strong"][level]}</b><p class="muted" style="margin-top:4px">${feelPick.r}${strong}</p></div>`;
-  $("#feelGo").innerHTML = feelPick.go.map(id => `<button class="btn primary block" data-go2="${id}">${GO_LABEL[id]}</button>`).join("") + `<button class="btn block" data-home2>Back to garden</button>`;
+  // Strong heavy feelings: point gently to real support, without diagnosing.
+  const needsSupport = level === 2 && ["low", "overwhelmed", "anxious", "drained"].includes(feelPick.id);
+  $("#support").classList.toggle("hidden", !needsSupport);
+  $("#feelGo").innerHTML = feelPick.go.map((id, i) => `<button class="btn ${i ? "" : "go "}block" data-go2="${id}">${GO_LABEL[id]}</button>`).join("") + `<button class="btn block" data-home2>Back to the lot</button>`;
   $$("[data-go2]").forEach(b => b.onclick = () => { if (b.dataset.go2 === "focus") { S.focusMin = 2; fs.stepsOpen = true; } if (b.dataset.go2 === "quiet") return enterQuiet(); show(b.dataset.go2); });
   $("[data-home2]").onclick = () => show("home");
   S.feelLog.push({ f: feelPick.id, s: level, t: Date.now() }); S.feelLog = S.feelLog.slice(-14);
@@ -894,6 +996,12 @@ $("#sand").addEventListener("pointerup", () => lastPt = null);
 $("#sand").addEventListener("pointercancel", () => lastPt = null);
 $$("[data-rake]").forEach(b => b.onclick = () => { S.rake = +b.dataset.rake; save(); $$("[data-rake]").forEach(x => x.setAttribute("aria-pressed", x === b)); });
 $("#sandClear").onclick = () => { initSand(); tone(262, .6, .03); };
+$("#sandAuto").onclick = () => {
+  const shapes = [[170, 140, 70], [462, 270, 80], [300, 360, 46]], g = pick(shapes);
+  lastPt = null; for (let a = 0; a <= Math.PI * 2.05; a += .06) rakeTo(g[0] + Math.cos(a) * g[2], g[1] + Math.sin(a) * g[2] * .72); lastPt = null;
+  const y = rand(60, 380); for (let x = 10; x < 630; x += 6) rakeTo(x, y + Math.sin(x / 40) * 22); lastPt = null;
+  say("rake", "A pattern raked for you. Rake more, smooth it out, or press Done.");
+};
 $("#sandDone").onclick = () => {
   if (sandLen < 300) { say("rake", "Rake a few more lines first. Slow is perfect."); return; }
   if (sandGrown) { say("rake", "This one's already in your garden. Keep raking as long as you like."); return; }
@@ -919,9 +1027,9 @@ function renderWelcome(step) {
   const body = $("#obBody");
   if (step === 0) {
     body.innerHTML = `<div class="ob-hero">
-        <svg class="mark" viewBox="0 0 96 96" aria-hidden="true"><defs><linearGradient id="obG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fe0bd"/><stop offset="1" stop-color="#86c8ff"/></linearGradient></defs><circle cx="48" cy="48" r="46" fill="url(#obG)" opacity=".16"/><path d="M48 74V44" stroke="#7fe0bd" stroke-width="4" stroke-linecap="round"/><path d="M48 50c0-14 9-22 22-22 0 14-9 22-22 22Z" fill="url(#obG)"/><path d="M48 58c0-11-7-18-18-18 0 11 7 18 18 18Z" fill="url(#obG)" opacity=".75"/></svg>
-        <p class="eyebrow" style="letter-spacing:.08em;text-transform:uppercase;font-size:.78rem">Welcome to Quietroot</p>
-        <h1>A quiet garden for busy minds</h1>
+        <svg class="mark" viewBox="0 0 96 96" aria-hidden="true"><defs><linearGradient id="obG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fe0bd"/><stop offset="1" stop-color="#86c8ff"/></linearGradient></defs><rect x="6" y="54" width="84" height="30" rx="3" fill="#b8875a"/><rect x="14" y="60" width="68" height="18" rx="2" fill="#3b3226"/><path d="M48 74V44" stroke="#7fe0bd" stroke-width="4" stroke-linecap="round"/><path d="M48 50c0-14 9-22 22-22 0 14-9 22-22 22Z" fill="url(#obG)"/><path d="M48 58c0-11-7-18-18-18 0 11 7 18 18 18Z" fill="url(#obG)" opacity=".75"/></svg>
+        <h1>Welcome to Quietroot</h1>
+        <p class="lede">A quiet lot for busy minds.</p>
         <p class="muted">Focus, calm down and plan your day in small steps. Everything you do grows something here, and nothing is ever taken away.</p></div>
       <div class="ob-actions"><button class="btn primary block" id="obNext">Set it up for me</button><button class="btn link" id="obSkip">Skip for now</button></div>
       <p class="center muted" style="font-size:.8rem;margin-top:8px">Three quick questions. Everything stays on this device.</p>`;
@@ -947,6 +1055,7 @@ function renderWelcome(step) {
   if ($("#obBack")) $("#obBack").onclick = () => renderWelcome(step - 1);
   if ($("#obSkip")) $("#obSkip").onclick = () => { S.onboarded = true; save(); show("home"); };
   window.scrollTo(0, 0);
+  const head = $("#obBody h1, #obBody h2"); if (head && step > 0) { head.tabIndex = -1; head.focus({ preventScroll: true }); }
 }
 function finishWelcome() {
   S.goals = [...ob.goals];
@@ -1015,43 +1124,11 @@ function renderSettings() {
   renderRemNote();
 }
 
-/* ================= Interactive garden ================= */
-let selPlant = -1, moving = false;
-function plantSpot(p, i) {
-  if (p.pos) return { x: p.pos.x, b: p.pos.b };
-  return { x: Math.round(14 + ((i * 0.6180339 + 0.1) % 1) * 372), b: 240 + ((i * 37) % 54) };
-}
-function svgPoint(svg, e) { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
-$("#garden").addEventListener("click", e => {
-  const svg = e.currentTarget;
-  if (moving && selPlant >= 0) {
-    const pt = svgPoint(svg, e);
-    if (pt.y < 232) { $("#sceneHint").textContent = "Tap lower down, on the grass."; return; }
-    S.plants[selPlant].pos = { x: Math.round(Math.max(12, Math.min(388, pt.x))), b: Math.round(Math.min(294, pt.y)) };
-    save(); moving = false; svg.classList.remove("moving"); tone(587, .2);
-    drawGarden(); showPlantInfo(selPlant); $("#sceneHint").textContent = "Moved. Tap a plant to see its story, or move it.";
-    return;
-  }
-  const g = e.target.closest(".pl");
-  if (!g) { selPlant = -1; $("#plantInfo").classList.add("hidden"); drawGarden(); return; }
-  selPlant = +g.dataset.i; drawGarden(); showPlantInfo(selPlant); tone(523, .12);
-});
-function showPlantInfo(i) {
-  const p = S.plants[i]; if (!p) return;
-  const act = ACTS[p.k] || ACTS.sort, name = PLANT_NAME[act.plant];
-  const when = p.t ? new Date(p.t).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + ", " + new Date(p.t).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : "Planted before plant stories began";
-  const why = { focus: "a focus session", breathe: "a breathing session", path: "finishing your day's plan", feelings: "checking in with yourself", sort: "a round of sorting", pattern: "matching a pattern", fireflies: "releasing the fireflies", rake: "raking the sand" }[p.k] || "an activity";
-  const box = $("#plantInfo"); box.classList.remove("hidden");
-  box.innerHTML = `<svg class="pi-art" viewBox="0 0 52 64" aria-hidden="true">${(PLANT[act.plant])(26, 58, 34, COLORS[p.c].v)}</svg>
-    <div class="tx"><div class="t">${name}</div><div class="s">Grew from ${why}</div><div class="s">${when}</div></div>
-    <button class="btn sm" id="moveBtn">Move</button>`;
-  $("#moveBtn").onclick = () => { moving = true; $("#garden").classList.add("moving"); $("#sceneHint").textContent = `Now tap a spot on the grass to move your ${name.toLowerCase()}.`; };
-}
-
 /* ================= After-activity check ("Did it help?") ================= */
 const EFFECT_KINDS = ["focus", "breathe", "sort", "pattern", "fireflies", "rake"];
 function askEffect(kind) {
-  if (!EFFECT_KINDS.includes(kind) || current !== kind) return;
+  if (!EFFECT_KINDS.includes(kind) || current !== kind || S.today["asked_" + kind]) return;
+  S.today["asked_" + kind] = true;
   const host = $(`#s-${kind} [data-say]`); if (!host) return;
   $$(".after").forEach(el => el.remove());
   const box = document.createElement("div"); box.className = "card after";
@@ -1070,7 +1147,8 @@ function renderInsights() {
   const weekPlants = S.plants.filter(p => p.t && now - p.t < WEEK);
   const weekDays = S.days.filter(d => { const [y, m, dd] = d.split("-").map(Number); return now - new Date(y, m - 1, dd).getTime() < WEEK; }).length;
   const weekFeel = S.feelLog.filter(f => now - f.t < WEEK);
-  let html = `<div class="stats"><div class="card stat"><b>${weekDays}</b><span>days here</span></div><div class="card stat"><b>${weekPlants.length}</b><span>plants grown</span></div><div class="card stat"><b>${weekFeel.length}</b><span>check-ins</span></div></div>`;
+  const wk = weekStrip();
+  let html = `<div class="card ins"><h3>This week</h3><div class="week">${wk.html}</div><p style="margin-top:10px">${wk.count ? `${wk.count} day${wk.count === 1 ? "" : "s"} in the lot. Any day you visit counts.` : "Any day you visit counts. Nothing is lost by missing one."}</p></div><div class="stats"><div class="card stat"><b>${weekDays}</b><span>days here</span></div><div class="card stat"><b>${weekPlants.length}</b><span>plants grown</span></div><div class="card stat"><b>${weekFeel.length}</b><span>check-ins</span></div></div>`;
   // what helps
   const eff = S.effects.filter(e => now - e.t < MONTH), by = {};
   eff.forEach(e => { (by[e.k] = by[e.k] || { n: 0, good: 0 }); by[e.k].n++; if (e.r > 0) by[e.k].good++; });
@@ -1153,6 +1231,12 @@ function ask(text, yes = "OK") {
     bg.onclick = e => { if (e.target === bg) done(false); };
   });
 }
+function undoable(msg, undo) {
+  const el = $("#toast");
+  el.innerHTML = `<span class="ti">${icon("x")}</span><div><b>${esc(msg)}</b></div><button class="btn sm" id="undoBtn">Undo</button>`;
+  el.classList.remove("hidden"); $("#undoBtn").onclick = () => { el.classList.add("hidden"); undo(); };
+  clearTimeout(grow.t); grow.t = setTimeout(() => el.classList.add("hidden"), 6000);
+}
 function note(title, body) {
   const el = $("#toast");
   el.innerHTML = `<span class="ti">${icon("sparkle")}</span><div><b>${title}</b><span>${body}</span></div>`;
@@ -1167,7 +1251,7 @@ function applySettings() {
   const r = document.documentElement;
   r.dataset.theme = S.theme; r.dataset.contrast = S.contrast ? "high" : ""; r.dataset.motion = S.motion ? "on" : "off";
   r.style.setProperty("--fs", S.fs + "rem");
-  $('meta[name="theme-color"]').content = S.theme === "light" ? "#f1f4ef" : "#0b141c";
+  $('meta[name="theme-color"]').content = S.theme === "light" ? "#e7e5df" : "#24272a";
   const val = { music: S.music, sound: S.sound, still: !S.motion, contrast: S.contrast };
   $$("[data-set]").forEach(b => b.setAttribute("aria-checked", !!val[b.dataset.set]));
   $$("[data-theme-btn]").forEach(b => b.setAttribute("aria-pressed", b.dataset.themeBtn === S.theme));
@@ -1187,7 +1271,7 @@ $$("[data-set]").forEach(b => b.onclick = () => {
   if (k === "music") return setMusic(!S.music);
   if (k === "still") S.motion = !S.motion; else S[k] = !S[k];
   save(); applySettings(); tone(523, .15);
-  if (current === "home") drawGarden();
+  if (current === "home") drawLot();
 });
 $$("[data-theme-btn]").forEach(b => b.onclick = () => { S.theme = b.dataset.themeBtn; save(); applySettings(); });
 $("#musicBtn").onclick = () => setMusic(!S.music);
@@ -1207,5 +1291,5 @@ if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   navigator.serviceWorker.addEventListener("message", e => { if (e.data && SCREENS.includes(e.data.go)) show(e.data.go); });
 }
-setInterval(() => { if (current === "home" && !document.hidden) drawGarden(); }, 60 * 1000); // sun, moon and sky follow the clock
-document.addEventListener("visibilitychange", () => { if (!document.hidden && current === "home") drawGarden(); });
+setInterval(() => { if (current === "home" && !document.hidden) drawSkyline(); }, 60 * 1000); // sun, moon and sky follow the clock
+document.addEventListener("visibilitychange", () => { if (!document.hidden && current === "home") drawSkyline(); });

@@ -1,6 +1,6 @@
 /* Quietroot service worker: works offline, and handles reminder taps.
    Change VERSION whenever you publish an update, so phones pick up the new files. */
-const VERSION = "quietroot-v2";
+const VERSION = "quietroot-v3";
 const APP = ["./", "index.html", "style.css", "game.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"];
 const FONT_CACHE = "quietroot-fonts";
 

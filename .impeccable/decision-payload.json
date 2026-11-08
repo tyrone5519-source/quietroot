@@ -1,0 +1,113 @@
+{
+  "title": "Choose Quietroot's urban-garden look",
+  "question": "The draw picked Riso Seed Zine. Keep it, take an alternate, or draw again.",
+  "options": [
+    {
+      "id": "assigned",
+      "kind": "assigned",
+      "label": "Riso Seed Zine",
+      "kicker": "THE ROLL",
+      "lineage": "Guerrilla-gardening zines and seed-bomb flyers, printed two-ink on a risograph",
+      "thesis": "Your day printed as a two-ink street-garden zine: green for what grows, pink for what you did today.",
+      "palette": ["#e2e7dc", "#1f6b46", "#ff4fa0", "#26332b", "#f6f7f1"],
+      "materials": ["risograph overprint", "recycled grey-green stock", "halftone grain"],
+      "viewport": "Masthead with the date, a two-ink garden print, one lit next action, the rest set quiet below, square tab bar.",
+      "risk": "Fluorescent pink can feel loud to sensory-sensitive users unless it is kept to one mark per screen.",
+      "raised": [
+        { "from": "challenger-variable-font", "raise": "Hierarchy by scale alone: one big condensed word or number per screen, everything else small." },
+        { "from": "challenger-design-annual", "raise": "Hairline 1px rules and square corners carry the grid; no soft shadows or glass." },
+        { "from": "challenger-streaming-wall", "raise": "Only the one next action is lit; every other choice on home sits dimmed until touched." },
+        { "from": "challenger-star-atlas", "raise": "Plant size follows a fixed ramp by how long the activity took, so the garden reads as a record." },
+        { "from": "challenger-cassette", "raise": "Today shows a visible capacity: a gentle day holds about five steps, and the bar says when it is full." }
+      ],
+      "html": ".impeccable/mocks/decision/assigned.html",
+      "htmlFrame": "390x844"
+    },
+    {
+      "id": "model-pick",
+      "kind": "pick",
+      "label": "Community Garden Plots",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "City community gardens: numbered raised beds, stencilled plot signs, chain-link and asphalt",
+      "thesis": "Your garden is a city lot of numbered raised beds; every activity tends its own plot.",
+      "palette": ["#24272a", "#b8875a", "#f1efe8", "#5f9a55", "#f26b21"],
+      "materials": ["painted timber", "spray stencil", "asphalt"],
+      "viewport": "Top-down plot map of numbered beds, a stencilled plot label, one next action, tab bar.",
+      "risk": "The most literal reading of urban garden; stencil type turns gimmicky if used beyond labels.",
+      "html": ".impeccable/mocks/decision/model-pick.html",
+      "htmlFrame": "390x844"
+    },
+    {
+      "id": "challenger-transit",
+      "kind": "challenger",
+      "catalogId": "wayfinding-cartography-signage-midnight-transit-diagram",
+      "label": "Garden Line",
+      "verdict": "competitive",
+      "lineage": "Midnight-blue enamel rail map",
+      "thesis": "Your day as a transit line: each step a station, the next stop lit.",
+      "palette": ["#14214a", "#f4f1e8", "#e2453a", "#2f6fd6", "#f2b233", "#3a9a5b"],
+      "materials": ["enamel panel", "porcelain ticks"],
+      "viewport": "One vertical line of today's steps as stations, the next stop glowing, transfers to Focus and Breathe.",
+      "case": "Strongly urban and makes Today very clear, but the garden disappears, so it loses on identity.",
+      "risk": "Reads as a commuting app; the garden and calm become secondary.",
+      "html": ".impeccable/mocks/decision/challenger-transit.html",
+      "htmlFrame": "390x844",
+      "hero": "https://impeccable.style/worlds/cards/wayfinding-cartography-signage-midnight-transit-diagram-hero.webp"
+    },
+    {
+      "id": "challenger-variable-font", "kind": "challenger", "catalogId": "variable-font-specimen",
+      "label": "Type Specimen", "verdict": "declined", "lineage": "Interactive variable-font specimen",
+      "thesis": "A giant glyph morphing on a slider.", "palette": ["#f7f7f5", "#111111", "#ff3b1f"],
+      "materials": ["flat paper", "monospace readouts"], "viewport": "One huge letter and an axis slider.",
+      "case": "No garden, no city; users do not identify with type tools.", "risk": "Cold for an overwhelmed user.",
+      "kept": "Hierarchy by scale contrast alone."
+    },
+    {
+      "id": "challenger-design-annual", "kind": "challenger", "catalogId": "design-annual-s-plate-section",
+      "label": "Design Annual Plates", "verdict": "declined", "lineage": "Design annual plate section",
+      "thesis": "Every screen a printed plate with registration marks.", "palette": ["#f5f4f6", "#16181a", "#dcddf3"],
+      "materials": ["uncoated stock", "hairlines"], "viewport": "A plate grid with crosshairs.",
+      "case": "Gallery-like and detached from daily struggle.", "risk": "Precious, not comforting.",
+      "kept": "Hairline grid discipline and square corners."
+    },
+    {
+      "id": "challenger-streaming-wall", "kind": "challenger", "catalogId": "pop-culture-shelf-streaming-title-card-wall",
+      "label": "Title Wall", "verdict": "declined", "lineage": "Streaming catalog rows",
+      "thesis": "Rows of tiles; the focused one grows.", "palette": ["#111214", "#e50914", "#ffffff"],
+      "materials": ["poster art", "dark ground"], "viewport": "Horizontal rows of activity tiles.",
+      "case": "Endless rows are the opposite of calm, low-choice design.", "risk": "Overload by design.",
+      "kept": "Only the focused item is lit; the rest dims."
+    },
+    {
+      "id": "challenger-star-atlas", "kind": "challenger", "catalogId": "notation-diagram-systems-star-atlas",
+      "label": "Star Atlas", "verdict": "declined", "lineage": "Celestial star charts",
+      "thesis": "Progress as stars ranked by size.", "palette": ["#0d1a33", "#f4f1e6", "#d9472b"],
+      "materials": ["chart navy", "chalk dots"], "viewport": "A night chart of completed sessions.",
+      "case": "Beautiful at night but neither urban nor a garden.", "risk": "Abstract; data-first.",
+      "kept": "Importance carried by size on a fixed ramp."
+    },
+    {
+      "id": "challenger-cassette", "kind": "challenger", "catalogId": "vernacular-ephemera-cassette-j-card",
+      "label": "Mixtape J-Card", "verdict": "declined", "lineage": "Hand-lettered cassette inlays",
+      "thesis": "The day as a mixtape with side A and B.", "palette": ["#ffffff", "#1d3fbf", "#d42b2b"],
+      "materials": ["ballpoint", "inlay card"], "viewport": "A tracklist of today's steps.",
+      "case": "Charming but nostalgic and unrelated to gardens.", "risk": "Novelty over calm.",
+      "kept": "A hard, visible capacity you fill but cannot overflow."
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code", "toggle": false },
+  "canon": true,
+  "canonCard": {
+    "kind": "canon",
+    "label": "The category standard",
+    "thesis": "A calm wellness app as most ship it, done very well.",
+    "palette": ["#f7f6fb", "#1e1b2e", "#7c6ff0", "#e8e4fb"],
+    "materials": ["soft rounded cards", "gentle gradients"],
+    "viewport": "Greeting, a large rounded card for today's suggestion, a grid of activity cards.",
+    "risk": "Looks like every other calm app; no urban garden character.",
+    "html": ".impeccable/mocks/decision/canon.html",
+    "htmlFrame": "390x844"
+  },
+  "steer": true
+}

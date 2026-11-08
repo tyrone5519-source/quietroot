@@ -51,14 +51,15 @@ const DEF = {
   today: {}, feelLog: [], path: { steps: [], done: [], day: "" },
   onboarded: false, goals: [],
   reminders: { plan: { on: false, time: "08:30" }, focus: { on: false, time: "10:30" }, wind: { on: false, time: "21:30" } },
-  remFired: {}, effects: [], pathLog: {}
+  remFired: {}, effects: [], pathLog: {},
+  fsteps: [], ftask: "", companion: false, quiet: false, quietPrevMusic: true
 };
 let S = structuredClone(DEF);
 try { S = Object.assign(S, JSON.parse(localStorage.getItem("calmGarden2") || "{}")); } catch (e) {}
 if (!S.path || !Array.isArray(S.path.steps)) S.path = structuredClone(DEF.path);
 if (!Array.isArray(S.days)) S.days = [];
 S.reminders = Object.assign(structuredClone(DEF.reminders), S.reminders || {});
-for (const k of ["effects", "goals"]) if (!Array.isArray(S[k])) S[k] = [];
+for (const k of ["effects", "goals", "fsteps"]) if (!Array.isArray(S[k])) S[k] = [];
 for (const k of ["remFired", "pathLog"]) if (!S[k] || typeof S[k] !== "object") S[k] = {};
 if (S.fs > 1.3 || S.fs < .85) S.fs = 1;
 if (S.today.day !== today()) S.today = { day: today() };
@@ -326,7 +327,7 @@ function grow(kind) {
 }
 
 /* ================= navigation ================= */
-const SCREENS = ["welcome", "insights", "home", "focus", "breathe", "path", "feelings", "sort", "pattern", "fireflies", "rake", "settings"];
+const SCREENS = ["welcome", "quiet", "insights", "home", "focus", "breathe", "path", "feelings", "sort", "pattern", "fireflies", "rake", "settings"];
 const TABS = { home: ["Garden", "home"], focus: ["Focus", "focus"], breathe: ["Breathe", "breathe"], path: ["Today", "path"], settings: ["Settings", "settings"] };
 let current = "home";
 function show(id) {
@@ -334,9 +335,9 @@ function show(id) {
   if (current === "fireflies") ff.active = false;
   current = id; selPlant = -1; moving = false;
   $$(".after").forEach(el => el.remove());
-  document.body.classList.toggle("no-tabs", id === "welcome");
+  document.body.classList.toggle("no-tabs", id === "welcome" || id === "quiet");
   SCREENS.forEach(s => $(`#s-${s}`).classList.toggle("hidden", s !== id));
-  ({ welcome: () => renderWelcome(0), insights: renderInsights, home: renderHome, focus: initFocus, breathe: initBreath, path: renderPath, feelings: startFeelings, sort: () => startSort(0), pattern: newBed, fireflies: startFireflies, rake: initSand, settings: renderSettings }[id])();
+  ({ welcome: () => renderWelcome(0), quiet: () => {}, insights: renderInsights, home: renderHome, focus: initFocus, breathe: initBreath, path: renderPath, feelings: startFeelings, sort: () => startSort(0), pattern: newBed, fireflies: startFireflies, rake: initSand, settings: renderSettings }[id])();
   const tab = TABS[id] ? id : "home";
   $$(".tab").forEach(b => b.dataset.tab === tab ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
   window.scrollTo(0, 0);
@@ -388,7 +389,28 @@ function renderHome() {
   $("#quickFocus").style.order = g.includes("calm") && !g.includes("focus") ? 1 : 0;
   $("#plantInfo").classList.add("hidden");
   $("#sceneHint").textContent = S.plants.length ? "Tap a plant to see its story, or move it." : "Finish any activity to grow your first plant.";
+  $("#quietBtn").innerHTML = `${icon("moon")}Quiet`;
+  $("#quietBtn").setAttribute("aria-label", "Quiet mode: a simpler screen for hard moments");
+  $("#quietBanner").classList.toggle("hidden", !S.quiet);
 }
+
+/* ================= Quiet mode: one tap to a calmer, simpler screen ================= */
+function enterQuiet() {
+  if (!S.quiet) { S.quiet = true; S.quietPrevMusic = S.music; }
+  if (S.music) { S.music = false; musicStop(); }
+  save(); applySettings(); show("quiet");
+}
+function leaveQuiet() {
+  S.quiet = false; S.music = S.quietPrevMusic; save(); applySettings();
+  if (S.music) musicStart();
+  show("home");
+}
+$("#quietBtn").onclick = enterQuiet;
+$("#quietOff").onclick = leaveQuiet;
+$("#qLeave").onclick = leaveQuiet;
+$("#qBreathe").onclick = () => { S.bpat = 0; S.breaths = 3; save(); show("breathe"); $("#bStart").click(); };
+$("#qCheck").onclick = () => show("feelings");
+$("#qTiny").onclick = () => { S.focusMin = 2; save(); show("focus"); };
 
 /* ================= Focus ================= */
 const fs = { total: 0, left: 0, endAt: 0, running: false, started: false, iv: null };
@@ -418,20 +440,75 @@ function focusUI() {
   $("#fStop").textContent = brk ? "End break" : "Finish early";
   $("#fStop").classList.toggle("hidden", !fs.started);
   $("#fBreak").classList.toggle("hidden", fs.started || !fs.offerBreak);
+  $("#fMore").classList.toggle("hidden", fs.started || !fs.offerMore);
   $("#fControls").classList.toggle("hidden", fs.started);
-  $("#fMins").innerHTML = [5, 10, 15, 25, 45].map(m => `<button data-fmin="${m}" aria-pressed="${m === S.focusMin}">${m} min</button>`).join("");
+  $("#fMins").innerHTML = [2, 5, 10, 15, 25, 45].map(m => `<button data-fmin="${m}" aria-pressed="${m === S.focusMin}" aria-label="${m} minutes">${m}</button>`).join("");
   $$("[data-fmin]").forEach(b => b.onclick = () => { S.focusMin = +b.dataset.fmin; save(); focusUI(); });
   $("#fHide").textContent = S.hideClock ? "Show clock" : "Hide clock";
+  $("#fBuddySw").setAttribute("aria-checked", !!S.companion);
+  $("#fBuddy").classList.toggle("hidden", !(S.companion && fs.started && fs.mode !== "break"));
+  $("#fBuddy").style.animationPlayState = fs.running ? "running" : "paused";
+  const task = (fs.started && fs.task) || "";
+  $("#fNow").classList.toggle("hidden", !task);
+  if (task) $("#fNow").innerHTML = `<span>${fs.mode === "break" ? "Paused for a break" : "Right now"}</span>${esc(task)}`;
 }
 function initFocus() {
-  if (!fs.started) say("focus", "Pick a length and name the one thing you're working on. The plant grows while you work. Pausing or finishing early is fine.");
-  focusUI();
+  if (!fs.started) say("focus", "Pick a length and name the one thing you're working on. Can't get going? Break it into tiny steps, or try 2 minutes. You can always keep going after.");
+  $("#fTask").value = S.ftask || "";
+  renderSteps(); focusUI();
 }
-function focusTick() { fs.left = Math.max(0, (fs.endAt - Date.now()) / 1000); if (current === "focus") focusUI(); if (fs.left <= 0) focusEnd(true); }
+const BUDDY_LINES = [
+  "Still here with you.", "One small piece at a time.", "If you drifted off, that's normal. Come back to the next tiny bit.",
+  "You're doing the hard part: staying with it.", "Unclench your jaw, drop your shoulders. Keep going.", "No need to be perfect. Just keep it moving."
+];
+function focusTick() {
+  fs.left = Math.max(0, (fs.endAt - Date.now()) / 1000);
+  if (S.companion && fs.mode === "work" && fs.running) {          // gentle companion check-ins
+    const done = fs.total - fs.left, half = fs.total / 2;
+    if (!fs.saidHalf && fs.total >= 300 && done >= half) { fs.saidHalf = true; say("focus", "Halfway there. Keep going, or take one slow breath first."); }
+    else if (done - (fs.lastBuddy || 0) >= 240) { fs.lastBuddy = done; say("focus", BUDDY_LINES[(fs.buddyI = ((fs.buddyI || 0) + 1)) % BUDDY_LINES.length]); }
+  }
+  if (current === "focus") focusUI();
+  if (fs.left <= 0) focusEnd(true);
+}
+
+/* ---------- Break it into tiny steps ---------- */
+const STARTERS = ["Open what I need", "Clear a small space", "Write one rough sentence", "List what's involved", "Do the easiest bit first", "Gather the materials"];
+function renderSteps() {
+  const box = $("#fSteps"), steps = S.fsteps;
+  if (!fs.stepsOpen && !steps.length) {
+    box.innerHTML = `<div class="fsteps-head"><div><b>Feels too big to start?</b><div class="muted" style="font-size:.85rem">Break it into tiny steps, then focus on just the first one.</div></div><button class="btn sm" id="fStepsOpen">Break it down</button></div>`;
+    $("#fStepsOpen").onclick = () => { fs.stepsOpen = true; renderSteps(); $("#fStepIn")?.focus(); };
+    return;
+  }
+  const next = steps.findIndex(s => !s.done);
+  box.innerHTML = `<div class="fsteps-head"><b>Tiny steps</b>${steps.length ? `<button class="btn link" id="fStepsClear" style="min-height:32px">Clear</button>` : ""}</div>
+    ${steps.map((s, i) => `<div class="fstep${s.done ? " done" : ""}"><button class="check" data-sdone="${i}" aria-label="${s.done ? "Mark not done" : "Mark done"}: ${esc(s.t)}" aria-pressed="${!!s.done}">${icon("check")}</button><span class="t">${esc(s.t)}</span>${!s.done && i === next ? `<button class="btn sm primary" data-sgo="${i}">Start this</button>` : ""}</div>`).join("")}
+    <form class="row" id="fStepForm" style="margin-top:10px;flex-wrap:nowrap"><input class="input" id="fStepIn" maxlength="50" placeholder="${steps.length ? "Add another tiny step" : "First tiny step, like Open the document"}" aria-label="Add a tiny step"><button class="btn sm">Add</button></form>
+    <div class="chips">${STARTERS.filter(t => !steps.some(s => s.t === t)).slice(0, 4).map(t => `<button data-starter="${esc(t)}">+ ${esc(t)}</button>`).join("")}</div>
+    ${steps.length && next < 0 ? `<p class="muted" style="margin-top:10px;font-size:.88rem">Every step done. That's the whole thing, one small piece at a time.</p>` : ""}`;
+  const add = t => { t = t.trim(); if (!t || S.fsteps.length >= 12) return; S.fsteps.push({ t: t.slice(0, 50), done: false }); save(); renderSteps(); tone(494, .15); };
+  $("#fStepForm").onsubmit = e => { e.preventDefault(); add($("#fStepIn").value); $("#fStepIn")?.focus(); };
+  $$("[data-starter]", box).forEach(b => b.onclick = () => add(b.dataset.starter));
+  $$("[data-sdone]", box).forEach(b => b.onclick = () => { const s = S.fsteps[+b.dataset.sdone]; s.done = !s.done; save(); renderSteps(); tone(s.done ? 587 : 392, .15); });
+  $$("[data-sgo]", box).forEach(b => b.onclick = () => { fs.stepIdx = +b.dataset.sgo; $("#fStart").click(); });
+  if ($("#fStepsClear")) $("#fStepsClear").onclick = () => { S.fsteps = []; fs.stepsOpen = false; save(); renderSteps(); };
+}
+$("#fTask").oninput = e => { S.ftask = e.target.value; save(); };
+$("#fBuddySw").onclick = () => { S.companion = !S.companion; save(); focusUI(); tone(523, .12); };
+$("#fMore").onclick = () => { S.focusMin = 10; fs.offerMore = false; fs.keepStep = true; $("#fStart").click(); };
 function focusEnd(finished) {
   clearInterval(fs.iv);
-  const mins = Math.round((fs.total - fs.left) / 60), wasBreak = fs.mode === "break";
-  fs.running = fs.started = false; fs.total = fs.left = 0; fs.mode = "work";
+  const mins = Math.round((fs.total - fs.left) / 60), wasBreak = fs.mode === "break", wasTiny = fs.total === 120, secs = fs.total - fs.left;
+  fs.running = fs.started = false; fs.total = fs.left = 0; fs.mode = "work"; fs.offerMore = false;
+  if (!wasBreak && fs.stepIdx != null && S.fsteps[fs.stepIdx] && (finished || secs >= 60)) { S.fsteps[fs.stepIdx].done = true; save(); renderSteps(); }
+  if (!wasBreak) fs.stepIdx = null;
+  if (!wasBreak && finished && wasTiny) {
+    fs.offerMore = true; fs.offerBreak = false; fs.bloomed = true;
+    say("focus", "Two minutes done. Starting was the hardest part, and you did it. Keep going if you've got momentum, or stop here. Both count.");
+    grow("focus"); notify("Two minutes done", "You started. Keep going, or stop here. Both count.", "focus");
+    focusUI(); return;
+  }
   if (wasBreak) {
     fs.offerBreak = false; fs.bloomed = false;
     say("focus", "Break's over. Another round, or done for now? Both are fine."); tone(659, .5); tone(784, .7);
@@ -457,10 +534,13 @@ $("#fBreak").onclick = () => {
 $("#fStart").onclick = () => {
   if (!fs.started) {
     $$(".after").forEach(el => el.remove());
-    fs.mode = "work"; fs.offerBreak = false; fs.bloomed = false;
-    fs.started = true; fs.total = fs.left = S.focusMin * 60;
-    const task = $("#fTask").value.trim();
-    say("focus", task ? `Working on <b>${esc(task)}</b>. If your mind wanders, that's normal. Just come back.` : "Started. If your mind wanders, that's normal. Just come back.");
+    fs.mode = "work"; fs.offerBreak = false; fs.offerMore = false; fs.bloomed = false;
+    fs.started = true; fs.total = fs.left = S.focusMin * 60; fs.saidHalf = false; fs.lastBuddy = 0;
+    const step = fs.stepIdx != null ? S.fsteps[fs.stepIdx]?.t : null;
+    if (!fs.keepStep) fs.task = step || $("#fTask").value.trim();
+    fs.keepStep = false;
+    const lead = S.companion ? "I'm right here with you. " : "";
+    say("focus", fs.task ? `${lead}Just this: <b>${esc(fs.task)}</b>. If your mind wanders, that's normal. Come back when you notice.` : `${lead}Started. If your mind wanders, that's normal. Come back when you notice.`);
   }
   if (fs.running) { fs.running = false; clearInterval(fs.iv); fs.left = Math.max(0, (fs.endAt - Date.now()) / 1000); }
   else { fs.running = true; fs.endAt = Date.now() + fs.left * 1000; fs.iv = setInterval(focusTick, 1000); }
@@ -583,10 +663,10 @@ const FEEL = [
   { id: "drained", w: "Drained", c: "#a9a3c9", r: "Running low isn't a failing. Water, food, or ten minutes of nothing at all are all reasonable next steps.", go: ["fireflies"] },
   { id: "anxious", w: "Anxious", c: "#86c8ff", r: "Long, slow out-breaths are one of the quickest ways to tell your nervous system you're safe.", go: ["breathe"] },
   { id: "low", w: "Low", c: "#7f9cc9", r: "That's a heavy one. Go easy on yourself today. If it hangs around, talking to someone you trust can help.", go: ["rake"] },
-  { id: "overwhelmed", w: "Overwhelmed", c: "#c39bf0", r: "Too much input or too much to do? Cut it down: a quieter space, headphones, dimmer light. Then pick just one thing.", go: ["breathe", "path"] },
-  { id: "stuck", w: "Stuck", c: "#ff8f8f", r: "Can't get started? That's common, and it isn't laziness. Make the first step tiny, or start a short focus session.", go: ["focus", "path"] }
+  { id: "overwhelmed", w: "Overwhelmed", c: "#c39bf0", r: "Too much input or too much to do? Cut it down: a quieter space, headphones, dimmer light. Then pick just one thing.", go: ["quiet", "breathe"] },
+  { id: "stuck", w: "Stuck", c: "#ff8f8f", r: "Can't get started? That's common, and it isn't laziness. Break it into tiny steps, or try just 2 minutes. Starting is the hardest part.", go: ["focus", "path"] }
 ];
-const GO_LABEL = { breathe: "Breathe for a minute", path: "Plan one small step", focus: "Start a 5-minute focus", rake: "Rake some sand", sort: "Sort for a bit", fireflies: "Watch the fireflies" };
+const GO_LABEL = { breathe: "Breathe for a minute", path: "Plan one small step", focus: "Try just 2 minutes", quiet: "Switch to quiet mode", rake: "Rake some sand", sort: "Sort for a bit", fireflies: "Watch the fireflies" };
 const dot = (c, size) => `<span class="dot" style="--c:${c};${size ? `width:${size}px;height:${size}px` : ""}"></span>`;
 let feelPick = null;
 function startFeelings() {
@@ -610,7 +690,7 @@ function answer(level) {
   say("feelings", "Thanks for checking in.");
   $("#reply").innerHTML = `${dot(feelPick.c)}<div><b>${feelPick.w}${["", " · moderate", " · strong"][level]}</b><p class="muted" style="margin-top:4px">${feelPick.r}${strong}</p></div>`;
   $("#feelGo").innerHTML = feelPick.go.map(id => `<button class="btn primary block" data-go2="${id}">${GO_LABEL[id]}</button>`).join("") + `<button class="btn block" data-home2>Back to garden</button>`;
-  $$("[data-go2]").forEach(b => b.onclick = () => { if (b.dataset.go2 === "focus") S.focusMin = 5; show(b.dataset.go2); });
+  $$("[data-go2]").forEach(b => b.onclick = () => { if (b.dataset.go2 === "focus") { S.focusMin = 2; fs.stepsOpen = true; } if (b.dataset.go2 === "quiet") return enterQuiet(); show(b.dataset.go2); });
   $("[data-home2]").onclick = () => show("home");
   S.feelLog.push({ f: feelPick.id, s: level, t: Date.now() }); S.feelLog = S.feelLog.slice(-14);
   renderHistory(); grow("feelings");
@@ -927,7 +1007,7 @@ function renderRemNote() {
     : "Never more than one at a time, and never if you've already started. In this web version, reminders arrive while Quietroot is open or in the background.";
 }
 function renderSettings() {
-  applySettings();
+  applySettings(); renderInstall();
   $("#remGroup").innerHTML = Object.entries(REM).map(([k, r]) => `<div class="set"><div><div>${r.label}</div><div class="d">${r.d}</div></div>
     <div class="rem-ctrl"><input type="time" data-rtime="${k}" value="${S.reminders[k].time}" aria-label="${r.label} time"><button class="switch" role="switch" data-rem="${k}" aria-checked="${S.reminders[k].on}" aria-label="${r.label}"><i></i></button></div></div>`).join("");
   $$("[data-rem]").forEach(b => b.onclick = () => { const c = S.reminders[b.dataset.rem]; c.on = !c.on; delete S.remFired[b.dataset.rem]; save(); b.setAttribute("aria-checked", c.on); if (c.on) askNotifyPermission(); });
@@ -1040,6 +1120,27 @@ $("#importFile").onchange = async e => {
     note("Backup restored", `${d.plants.length} plants are back in your garden.`);
   } catch (err) { e.target.value = ""; note("Couldn't restore", "That file doesn't look like a Quietroot backup."); }
 };
+/* Install as an app (Android/desktop Chrome show a real prompt; iPhone needs Share → Add to Home Screen). */
+let installEvt = null;
+const isInstalled = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+function renderInstall() {
+  const btn = $("#installBtn"), note = $("#installNote"), row = btn.closest(".group");
+  if (window.CG_SHARED) { row.classList.add("hidden"); row.previousElementSibling.classList.add("hidden"); return; }
+  if (isInstalled()) { note.textContent = "Installed. Quietroot works offline on this device."; btn.classList.add("hidden"); return; }
+  btn.classList.toggle("hidden", !installEvt && !isIOS);
+  if (isIOS) { btn.textContent = "How"; note.textContent = "Tap the Share button in Safari, then Add to Home Screen."; }
+  else if (!installEvt) note.textContent = "Open your browser's menu and choose Install app or Add to Home screen.";
+}
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (current === "settings") renderInstall(); });
+window.addEventListener("appinstalled", () => { installEvt = null; note("Installed", "Quietroot is on your home screen now."); renderInstall(); });
+$("#installBtn").onclick = async () => {
+  if (isIOS) { note("Add to Home Screen", "In Safari, tap Share (the square with an arrow), then Add to Home Screen."); return; }
+  if (!installEvt) return;
+  installEvt.prompt(); const { outcome } = await installEvt.userChoice; installEvt = null; renderInstall();
+  if (outcome === "accepted") tone(659, .4);
+};
+
 /* In-game confirmation (browser pop-ups are blocked in some places, and these look nicer anyway). */
 function ask(text, yes = "OK") {
   return new Promise(res => {

@@ -1,0 +1,24 @@
+{
+  "name": "Quietroot",
+  "short_name": "Quietroot",
+  "description": "A quiet garden for busy minds. Focus, breathing, daily planning and calming mini-games.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b141c",
+  "theme_color": "#0b141c",
+  "categories": ["health", "lifestyle", "productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Focus", "url": "./#focus", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Breathe", "url": "./#breathe", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Today", "url": "./#path", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ]
+}

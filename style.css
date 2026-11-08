@@ -273,6 +273,40 @@ input[type=range]{accent-color:var(--mint);width:150px;height:30px}
 .ask p{font-weight:600;line-height:1.45}
 .ask .row{justify-content:flex-end;margin-top:18px}
 
+/* focus: start helper */
+.fsteps{padding:14px 16px}
+.fsteps-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.fsteps-head b{font-weight:700}
+.fstep{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--stroke)}
+.fstep:first-of-type{margin-top:10px}
+.fstep .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.fstep.done .t{color:var(--muted);text-decoration:line-through}
+.fstep .check{width:26px;height:26px;color:transparent}
+.fstep.done .check{background:var(--mint);border-color:var(--mint);color:var(--on-accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chips button{font-size:.8rem;font-weight:650;padding:6px 12px;border-radius:999px;background:var(--surface-2);border:1px solid var(--stroke);color:var(--muted)}
+.set-inline{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 16px}
+.set-inline .d{font-size:.82rem;color:var(--muted)}
+.now-step{text-align:center;font-weight:700;margin:-6px 0 4px}
+.now-step span{display:block;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.f-stage{position:relative}
+.buddy{position:absolute;inset:0;margin:auto;width:min(310px,80vw);aspect-ratio:1;max-width:100%;animation:orbit 48s linear infinite;pointer-events:none}
+.buddy i{position:absolute;left:50%;top:1.5%;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff6c8;box-shadow:0 0 14px 6px rgba(255,226,122,.55);animation:glowpulse 4s ease-in-out infinite}
+@keyframes orbit{to{transform:rotate(360deg)}}
+@keyframes glowpulse{50%{box-shadow:0 0 22px 10px rgba(255,226,122,.35)}}
+
+/* quiet mode */
+.quiet-btn{gap:6px}
+.quiet-btn svg{width:18px;height:18px}
+.quiet-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;font-size:.9rem;padding:12px 14px}
+.quiet-wrap{min-height:calc(100vh - 80px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:20px 4px}
+.quiet-wrap h1{margin-top:8px}
+.quiet-wrap p{max-width:30ch}
+.quiet-orb{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 38% 32%,rgba(255,255,255,.5),transparent 50%),var(--grad);opacity:.85;animation:quietbreath 10s ease-in-out infinite}
+@keyframes quietbreath{0%,100%{transform:scale(.72);opacity:.55}40%{transform:scale(1);opacity:.9}}
+.quiet-actions{width:100%;max-width:360px;margin-top:10px}
+.quiet-actions .btn{min-height:60px;font-size:1.05rem}
+
 /* interactive garden */
 .scene-hint{font-size:.8rem;color:var(--faint);text-align:center;margin:8px 0 0}
 #garden .pl{cursor:pointer}

@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T19:40:00Z",
+  "title": "Design System: Quietroot",
+  "extensions": {
+    "colorMeta": {
+      "safety-orange": { "role": "primary", "displayName": "Safety Orange", "canonical": "#f26b21", "tonalRamp": ["#3d1806", "#6b2a0b", "#9c3d10", "#c95117", "#f26b21", "#ff8a4d", "#ffb48a", "#ffe0cc"] },
+      "on-orange": { "role": "neutral", "displayName": "On-Orange", "canonical": "#1a1a1a" },
+      "kale": { "role": "secondary", "displayName": "Kale", "canonical": "#5f9a55", "tonalRamp": ["#17271a", "#24402a", "#335c33", "#3f7a3a", "#5f9a55", "#7db372", "#93c788", "#d6ecd0"] },
+      "kale-ink": { "role": "secondary", "displayName": "Kale Ink", "canonical": "#93c788" },
+      "timber": { "role": "tertiary", "displayName": "Painted Timber", "canonical": "#b8875a", "tonalRamp": ["#2e2014", "#4d3622", "#6b4c31", "#8a6440", "#b8875a", "#cda27c", "#e0c2a5", "#f3e6d8"] },
+      "timber-dark": { "role": "tertiary", "displayName": "Dark Timber", "canonical": "#8a6440" },
+      "soil": { "role": "tertiary", "displayName": "Soil", "canonical": "#3b3226" },
+      "asphalt": { "role": "neutral", "displayName": "Asphalt", "canonical": "#24272a", "tonalRamp": ["#1b1d20", "#1c1e21", "#24272a", "#2c3034", "#363b40", "#383d42", "#4a5056", "#a3a6a0"] },
+      "asphalt-deep": { "role": "neutral", "displayName": "Asphalt Deep", "canonical": "#1c1e21" },
+      "slab": { "role": "neutral", "displayName": "Slab", "canonical": "#2c3034" },
+      "slab-raised": { "role": "neutral", "displayName": "Raised Slab", "canonical": "#363b40" },
+      "line": { "role": "neutral", "displayName": "Line", "canonical": "#4a5056" },
+      "line-soft": { "role": "neutral", "displayName": "Soft Line", "canonical": "#383d42" },
+      "chalk": { "role": "neutral", "displayName": "Chalk", "canonical": "#f1efe8", "tonalRamp": ["#575b58", "#747872", "#a3a6a0", "#bebfb8", "#d6d5cf", "#e7e5df", "#f1efe8", "#faf9f5"] },
+      "chalk-muted": { "role": "neutral", "displayName": "Muted Chalk", "canonical": "#bebfb8" },
+      "chalk-faint": { "role": "neutral", "displayName": "Faint Chalk", "canonical": "#a3a6a0" },
+      "bar": { "role": "neutral", "displayName": "Bar", "canonical": "#1b1d20" },
+      "concrete": { "role": "neutral", "displayName": "Sunny Concrete", "canonical": "#e7e5df" },
+      "concrete-deep": { "role": "neutral", "displayName": "Concrete Deep", "canonical": "#dcd9d1" },
+      "concrete-slab": { "role": "neutral", "displayName": "Concrete Slab", "canonical": "#f4f3ef" },
+      "concrete-ink": { "role": "neutral", "displayName": "Concrete Ink", "canonical": "#22252a" },
+      "concrete-line": { "role": "neutral", "displayName": "Concrete Line", "canonical": "#b3afa5" },
+      "concrete-orange": { "role": "primary", "displayName": "Concrete Orange", "canonical": "#e8611a" },
+      "concrete-kale-ink": { "role": "secondary", "displayName": "Concrete Kale Ink", "canonical": "#2f6a2b" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "h1 and the welcome title; stencil, uppercase." },
+      "headline": { "displayName": "Headline", "purpose": "Screen titles in the top bar and h2; stencil, uppercase." },
+      "numeral": { "displayName": "Numeral", "purpose": "Plot and bed numbers, the focus timer, stat counts; tabular figures." },
+      "sign-title": { "displayName": "Sign Title", "purpose": "Plot sign heading; Atkinson sentence case because it is read." },
+      "title": { "displayName": "Title", "purpose": "h3 and card headings." },
+      "body": { "displayName": "Body", "purpose": "All running text; captions cap at 62ch." },
+      "label": { "displayName": "Label", "purpose": "Field labels, board labels and the Up next tag; stencil, uppercase, muted." },
+      "small": { "displayName": "Small", "purpose": "Tab labels, bed names, chip and stat captions." }
+    },
+    "themes": [
+      { "name": "dark", "selector": ":root", "purpose": "Asphalt default." },
+      { "name": "light", "selector": ":root[data-theme=\"light\"]", "purpose": "Sunny-concrete mirror of every role." },
+      { "name": "high-contrast", "selector": ":root[data-contrast=\"high\"]", "purpose": "Pure black or white ground, full-strength lines and text, in either theme." }
+    ],
+    "shadows": [
+      { "name": "toast-lift", "value": "0 8px 24px rgba(0,0,0,.3)", "purpose": "Drop-down toast only." },
+      { "name": "dialog-lift", "value": "0 12px 32px rgba(0,0,0,.35)", "purpose": "Confirmation dialog over a rgba(10,11,12,.7) scrim." },
+      { "name": "cell-mark", "value": "inset 0 0 0 3px var(--orange)", "purpose": "Differing cells in the Match game." }
+    ],
+    "motion": [
+      { "name": "ease-enter", "value": "cubic-bezier(.16,1,.3,1)", "purpose": "Screen enter (0.3s, 6px rise), toast drop (0.35s), meter fill (0.6s)." },
+      { "name": "press", "value": "transform .1s; background .15s", "purpose": "Buttons and beds press down 1px." },
+      { "name": "breath", "value": "transform 4s cubic-bezier(.45,0,.55,1)", "purpose": "Breathing orb scale 0.6 to 1." },
+      { "name": "motion-off", "value": ":root[data-motion=\"off\"] and prefers-reduced-motion", "purpose": "All animation and transition removed." }
+    ],
+    "breakpoints": [
+      { "name": "narrow", "value": "max-width: 400px" },
+      { "name": "wide", "value": "min-width: 960px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Go Button",
+      "kind": "button",
+      "refersTo": "button-go",
+      "description": "The single next action on a screen.",
+      "html": "<button class=\"ds-btn ds-btn-go\">Start a 2-minute focus</button>",
+      "css": ".ds-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:50px; padding:0 20px; border-radius:4px; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-size:1rem; font-weight:700; cursor:pointer; transition:background .15s, transform .1s; } .ds-btn-go { background:var(--orange,#f26b21); border:1px solid var(--orange,#f26b21); color:var(--on-orange,#1a1a1a); } .ds-btn-go:hover { background:#ff7d36; } .ds-btn-go:active { transform:translateY(1px); } .ds-btn-go:focus-visible { outline:3px solid var(--orange,#f26b21); outline-offset:3px; }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Every non-primary action.",
+      "html": "<button class=\"ds-btn-default\">Finish early</button>",
+      "css": ".ds-btn-default { display:inline-flex; align-items:center; justify-content:center; min-height:50px; padding:0 20px; border-radius:4px; background:var(--surface-2,#363b40); border:1px solid var(--line,#4a5056); color:var(--text,#f1efe8); font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-size:1rem; font-weight:700; cursor:pointer; transition:background .15s, transform .1s; } .ds-btn-default:hover { background:var(--line-soft,#383d42); } .ds-btn-default:active { transform:translateY(1px); } .ds-btn-default:focus-visible { outline:3px solid var(--orange,#f26b21); outline-offset:3px; }"
+    },
+    {
+      "name": "Link Button",
+      "kind": "button",
+      "refersTo": "button-link",
+      "description": "Plain underlined text for skip, back and quiet secondary choices.",
+      "html": "<button class=\"ds-btn-link\">Skip for now</button>",
+      "css": ".ds-btn-link { background:none; border:0; min-height:44px; padding:0 8px; color:var(--muted,#bebfb8); font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-size:1rem; font-weight:700; text-decoration:underline; text-underline-offset:4px; cursor:pointer; } .ds-btn-link:hover { color:var(--text,#f1efe8); } .ds-btn-link:focus-visible { outline:3px solid var(--orange,#f26b21); outline-offset:3px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Stencil field label over an asphalt-deep input.",
+      "html": "<label class=\"ds-field-label\" for=\"ds-task\">What are you working on?</label><input class=\"ds-input\" id=\"ds-task\" placeholder=\"Optional, like Reply to the landlord\">",
+      "css": ".ds-field-label { display:block; font-family:'Big Shoulders Stencil Display','Arial Narrow',sans-serif; font-weight:800; font-size:.95rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted,#bebfb8); margin:0 2px 6px; } .ds-input { width:100%; min-height:50px; border-radius:4px; background:var(--bg-deep,#1c1e21); border:1px solid var(--line,#4a5056); color:var(--text,#f1efe8); padding:0 14px; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-size:1rem; } .ds-input::placeholder { color:var(--faint,#a3a6a0); } .ds-input:focus { outline:none; border-color:var(--orange,#f26b21); }"
+    },
+    {
+      "name": "Tab Bar",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Fixed bottom navigation; the current tab gains a 3px orange top bar.",
+      "html": "<nav class=\"ds-tabbar\"><button class=\"ds-tab\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 20h16M7 20v-6h10v6M12 14V6m0 0c0-2 2-3 4-3 0 2-2 3-4 3Z\"/></svg>Lot</button><button class=\"ds-tab\"><svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 8v4l3 2\"/></svg>Focus</button><button class=\"ds-tab\"><svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 9h11a3 3 0 1 0-3-3M4 15h14a3 3 0 1 1-3 3\"/></svg>Breathe</button></nav>",
+      "css": ".ds-tabbar { display:flex; justify-content:center; background:var(--bar,#1b1d20); border-top:1px solid var(--line,#4a5056); } .ds-tab { flex:1; max-width:112px; display:flex; flex-direction:column; align-items:center; gap:3px; padding:9px 4px 11px; background:none; border:0; border-top:3px solid transparent; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-size:.78rem; font-weight:700; color:var(--muted,#bebfb8); cursor:pointer; } .ds-tab:hover { color:var(--text,#f1efe8); } .ds-tab[aria-current=page] { color:var(--text,#f1efe8); border-top-color:var(--orange,#f26b21); } .ds-tab:focus-visible { outline:3px solid var(--orange,#f26b21); outline-offset:3px; }"
+    },
+    {
+      "name": "Plot Sign",
+      "kind": "card",
+      "refersTo": "plot-sign",
+      "description": "Chalk sign under the lot: stencil plot numeral beside the heading, one orange action.",
+      "html": "<div class=\"ds-sign\"><div class=\"ds-sign-head\"><span class=\"ds-sign-no\" aria-hidden=\"true\">02</span><h2 class=\"ds-sign-h\">Start the first tiny step</h2></div><p class=\"ds-sign-sub\">Two minutes is enough to count.</p><button class=\"ds-sign-go\">Start 2 minutes</button></div>",
+      "css": ".ds-sign { background:var(--text,#f1efe8); color:var(--bg,#24272a); border-radius:4px; padding:16px; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; } .ds-sign-head { display:flex; align-items:flex-start; gap:12px; } .ds-sign-no { font-family:'Big Shoulders Stencil Display','Arial Narrow',sans-serif; font-weight:800; font-size:2.2rem; line-height:.9; color:var(--timber-dark,#8a6440); } .ds-sign-h { margin:2px 0 8px; font-size:1.4rem; font-weight:700; line-height:1.2; } .ds-sign-sub { margin:0 0 12px; opacity:.82; } .ds-sign-go { width:100%; min-height:50px; border-radius:4px; background:var(--orange,#f26b21); border:1px solid var(--orange,#f26b21); color:var(--on-orange,#1a1a1a); font:inherit; font-weight:700; cursor:pointer; transition:background .15s, transform .1s; } .ds-sign-go:hover { background:#ff7d36; } .ds-sign-go:active { transform:translateY(1px); } .ds-sign-go:focus-visible { outline:3px solid var(--orange,#f26b21); outline-offset:3px; }"
+    },
+    {
+      "name": "Garden Bed",
+      "kind": "custom",
+      "refersTo": "bed",
+      "description": "One plot in the 3x3 lot: timber frame, soil, stencil number; the suggested bed is outlined orange.",
+      "html": "<button class=\"ds-bed ds-bed-suggest\"><span class=\"ds-bed-no\">02</span><span class=\"ds-soil\"><svg viewBox=\"0 0 60 30\" width=\"100%\"><path d=\"M30 30V12\" stroke=\"#5f9a55\" stroke-width=\"3\"/><path d=\"M30 16c0-7 5-11 11-11 0 7-5 11-11 11Z\" fill=\"#5f9a55\"/></svg></span><span class=\"ds-bed-name\">Focus</span></button>",
+      "css": ".ds-bed { position:relative; display:flex; flex-direction:column; width:110px; min-height:84px; padding:6px; background:var(--timber,#b8875a); border:0; border-radius:3px; text-align:left; cursor:pointer; transition:transform .15s; } .ds-bed:active { transform:translateY(1px); } .ds-bed-no { position:absolute; left:10px; top:7px; z-index:1; font-family:'Big Shoulders Stencil Display','Arial Narrow',sans-serif; font-weight:800; font-size:1.15rem; line-height:1; letter-spacing:.04em; color:#f1efe8; } .ds-soil { flex:1; display:block; background:var(--soil,#3b3226); border-radius:2px; padding:14px 2px 0; } .ds-bed-name { display:block; margin-top:5px; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-size:.78rem; font-weight:700; line-height:1.2; color:#1d1b17; } .ds-bed-suggest { outline:3px solid var(--orange,#f26b21); outline-offset:3px; } .ds-bed:focus-visible { outline:3px solid var(--orange,#f26b21); outline-offset:3px; }"
+    },
+    {
+      "name": "Quiet Links",
+      "kind": "nav",
+      "refersTo": "",
+      "description": "Three plain-text links ruled by hairlines; never buttons or cards.",
+      "html": "<div class=\"ds-qlinks\"><a class=\"ds-qlink\" href=\"#\"><b>Breathe</b><small>1 minute</small></a><a class=\"ds-qlink\" href=\"#\"><b>Check in</b><small>How it's going</small></a><a class=\"ds-qlink\" href=\"#\"><b>Today</b><small>3 steps left</small></a></div>",
+      "css": ".ds-qlinks { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border-top:1px solid var(--line-soft,#383d42); border-bottom:1px solid var(--line-soft,#383d42); font-family:'Atkinson Hyperlegible',system-ui,sans-serif; } .ds-qlink { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:56px; padding:8px 4px; text-align:center; color:var(--text,#f1efe8); text-decoration:none; } .ds-qlink + .ds-qlink { border-left:1px solid var(--line-soft,#383d42); } .ds-qlink b { font-size:.98rem; text-decoration:underline; text-decoration-color:var(--line,#4a5056); text-underline-offset:4px; } .ds-qlink:hover b { text-decoration-color:var(--text,#f1efe8); } .ds-qlink small { color:var(--muted,#bebfb8); font-size:.82rem; } .ds-qlink:focus-visible { outline:3px solid var(--orange,#f26b21); outline-offset:3px; }"
+    },
+    {
+      "name": "Step Row",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Today list row; kale-ink icon without a chip, orange border and Up next tag on the next step.",
+      "html": "<button class=\"ds-step ds-step-next\"><span class=\"ds-step-ic\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 12h16M12 4v16\"/></svg></span><span class=\"ds-step-t\">Make the bed</span><span class=\"ds-tag\">Up next</span><span class=\"ds-check\"></span></button>",
+      "css": ".ds-step { display:flex; align-items:center; gap:12px; width:100%; min-height:60px; padding:10px 12px; text-align:left; border-radius:4px; background:var(--surface,#2c3034); border:1px solid var(--line-soft,#383d42); color:var(--text,#f1efe8); font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-size:1rem; cursor:pointer; } .ds-step:hover { border-color:var(--line,#4a5056); } .ds-step-next { border:2px solid var(--orange,#f26b21); } .ds-step-ic { width:40px; height:40px; display:grid; place-items:center; color:var(--kale-ink,#93c788); } .ds-step-t { flex:1; font-weight:700; } .ds-tag { font-family:'Big Shoulders Stencil Display','Arial Narrow',sans-serif; font-weight:800; font-size:.85rem; letter-spacing:.06em; text-transform:uppercase; color:var(--on-orange,#1a1a1a); background:var(--orange,#f26b21); padding:2px 8px; border-radius:2px; } .ds-check { width:30px; height:30px; border-radius:50%; border:2px solid var(--faint,#a3a6a0); } .ds-step:focus-visible { outline:3px solid var(--orange,#f26b21); outline-offset:3px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Community Garden Plots",
+    "overview": "Quietroot is a city lot of numbered raised beds seen at night or on a sunny afternoon: asphalt ground, painted timber frames, chalk lettering, kale growing in dark soil. Each kind of activity has its own bed, and each finished activity plants something in it. The interface is that lot and the municipal signage around it; nothing floats, glows or blurs.\n\nDensity is low and deliberate. A single 560px column carries one screen at a time, with one filled orange action and everything else a quiet tap away. Surfaces are flat slabs separated by 1px hairlines or dashed chain-link borders; depth comes from material (timber around soil, chalk sign on asphalt), not from shadow. The world explicitly refuses soft rounded wellness cards, gradient heroes and glowing dark glass.\n\nA sunny-concrete light variant mirrors every role, and a high-contrast mode flattens both to pure black or white with full-strength lines. Theme, contrast, motion and text size are user-controlled, so every rule here must survive all four.",
+    "keyCharacteristics": [
+      "Asphalt ground, slab surfaces, chalk text; sunny-concrete mirror in light mode.",
+      "Safety orange is the action colour: one filled orange control per screen.",
+      "Kale is growth and done-ness; timber and soil are the bed material.",
+      "Stencil display face for headings, plot numerals, timers and field labels; Atkinson Hyperlegible for everything read.",
+      "Small 2-6px corners, 1px hairlines, dashed borders for zones, no glows, no glass."
+    ],
+    "rules": [
+      { "name": "The One Orange Rule", "body": "Each screen has exactly one filled orange control: the next action. Every other button is a raised slab, an outline on the sign, or a plain-text link. Orange may also appear as a 2-3px stroke for focus, the current tab and the current selection, never as a second fill.", "section": "colors" },
+      { "name": "The Kale Means Grown Rule", "body": "Kale fills only things that are done, on or growing. It is never a call to action.", "section": "colors" },
+      { "name": "The Painted Signage Rule", "body": "The stencil face appears only on h1/h2 screen titles, plot and bed numerals, timers and stat numbers, field labels and the step tag. Anything longer than a short label, including the plot sign's heading, is Atkinson Hyperlegible.", "section": "typography" },
+      { "name": "The Numeral, Not a Kicker, Rule", "body": "Headings never carry a label or kicker line above them. Where a heading needs a marker, a stencil plot numeral (two digits, Dark Timber) sits beside it.", "section": "typography" },
+      { "name": "The Asphalt Is Flat Rule", "body": "No glows, no gradients, no glass or backdrop blur on interface surfaces. Shadow belongs only to toasts and dialogs. Gradients are allowed only inside illustration where they depict something real, such as the time-of-day sky.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep exactly one filled Safety Orange control per screen, and use orange elsewhere only as a 2-3px stroke (focus, current tab, selection, suggested bed).",
+      "Do put text on orange in On-Orange near-black.",
+      "Do mark a heading with a stencil plot numeral beside it, in Dark Timber, when it needs a marker.",
+      "Do draw icons in Kale Ink directly on the surface.",
+      "Do use the chalk sign treatment for the next-action sign and the support card.",
+      "Do separate rows and quiet links with 1px hairlines and fence zones with dashed Line borders.",
+      "Do keep every touch target at least 44px and every focus ring 3px Safety Orange.",
+      "Do define every new colour role in both the asphalt and sunny-concrete themes and check it in high contrast."
+    ],
+    "donts": [
+      "Don't add a label, kicker or eyebrow line above a heading.",
+      "Don't use the stencil face for paragraphs, sign headings, buttons or anything a person reads at length.",
+      "Don't fill a second control in orange, or use orange for decoration.",
+      "Don't set icons in tinted, rounded chips.",
+      "Don't style quiet links as buttons or cards.",
+      "Don't use glows, gradients, glass or backdrop blur on interface surfaces, or shadows outside toasts and dialogs.",
+      "Don't round corners past 6px on rectangles or build soft pill-shaped cards."
+    ]
+  }
+}

@@ -338,18 +338,18 @@ function renderSign() {
   const box = $("#plotSign");
   if (swapFrom) {
     box.className = "sign swap";
-    box.innerHTML = `<p class="sign-plot">Swapping plot ${String(bedOrder().indexOf(swapFrom) + 1).padStart(2, "0")}</p><h2>Tap another plot to swap places</h2><button class="btn" id="swapCancel">Cancel</button>`;
+    box.innerHTML = `<div class="sign-head"><span class="sign-no" aria-hidden="true">${String(bedOrder().indexOf(swapFrom) + 1).padStart(2, "0")}</span><h2>Tap another plot to swap with this one</h2></div><button class="btn" id="swapCancel">Cancel</button>`;
     $("#swapCancel").onclick = () => { swapFrom = null; drawLot(); }; return;
   }
   if (selBed) {
     const k = selBed, num = String(bedOrder().indexOf(k) + 1).padStart(2, "0");
     if (k === "library") {
-      box.className = "sign"; box.innerHTML = `<p class="sign-plot">Plot ${num} · Your week</p><h2>See what seems to help you</h2><div class="sign-actions"><button class="btn go" id="signGo">Open Your week</button><button class="btn" id="signSwap">Swap plot</button></div>`;
+      box.className = "sign"; box.innerHTML = `<div class="sign-head"><span class="sign-no" aria-hidden="true">${num}</span><h2>Your week: what seems to help you</h2></div><div class="sign-actions"><button class="btn go" id="signGo">Open Your week</button><button class="btn" id="signSwap">Swap plot</button></div>`;
     } else {
       const ps = plantsOf(k), a = ACTS[k];
       const rows = ps.slice(-3).reverse().map(p => `<li>${PLANT_NAME[a.plant]} from ${a.why}<span>${p.t ? new Date(p.t).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "Before plant stories began"}</span></li>`).join("");
       box.className = "sign";
-      box.innerHTML = `<p class="sign-plot">Plot ${num} · ${a.name}</p><h2>${ps.length ? `${ps.length} ${PLANT_NAME[a.plant].toLowerCase()}${ps.length === 1 ? "" : "s"} growing` : "Nothing planted yet"}</h2>
+      box.innerHTML = `<div class="sign-head"><span class="sign-no" aria-hidden="true">${num}</span><h2>${a.name}: ${ps.length ? `${ps.length} ${PLANT_NAME[a.plant].toLowerCase()}${ps.length === 1 ? "" : "s"} growing` : "nothing planted yet"}</h2></div>
         ${rows ? `<ul class="story">${rows}</ul>` : `<p class="muted">Finish ${a.why} to plant the first one here.</p>`}
         <div class="sign-actions"><button class="btn go" id="signGo">Go to ${a.name}</button><button class="btn" id="signSwap">Swap plot</button></div>`;
     }
@@ -359,19 +359,20 @@ function renderSign() {
   }
   const g = suggestion();
   box.className = "sign next";
-  box.innerHTML = `<p class="sign-plot">Up next · ${g.where}</p><h2>${esc(g.title)}</h2><p class="muted">${g.sub}</p><button class="btn go block" id="signGo">${g.label}</button>`;
+  box.innerHTML = `<div class="sign-head"><span class="sign-no" aria-hidden="true">${String(bedOrder().indexOf(g.bed) + 1).padStart(2, "0")}</span><h2>${esc(g.title)}</h2></div><p class="muted">${g.sub}</p><button class="btn go block" id="signGo">${g.label}</button>${g.alt ? `<button class="btn block sign-alt" id="signAlt">${g.alt.label}</button>` : ""}`;
   $("#signGo").onclick = g.run;
+  if (g.alt) $("#signAlt").onclick = g.alt.run;
 }
 // One suggested next action, from today's list, the last check-in, the time of day and the setup answers.
 function suggestion() {
   const h = new Date().getHours(), st = S.path.steps, nx = S.path.done.findIndex(d => !d);
   const last = S.feelLog.at(-1), lastToday = last && today(new Date(last.t)) === today() ? last : null;
   const tiny = S.fsteps.find(s => !s.done)?.t || S.ftask;
-  const focus2 = { bed: "focus", where: "Focus", title: tiny ? tiny : "Start one small thing", sub: "Two minutes is enough to begin. Stop after that if you want.", label: "Start two minutes", run: () => { S.focusMin = 2; save(); show("focus"); } };
+  const focus2 = { bed: "focus", where: "Focus", title: tiny ? tiny : "Start one small thing", sub: "Two minutes is enough to begin. Stop after that if you want.", label: "Start two minutes of focus", run: () => { S.focusMin = 2; save(); show("focus"); } };
   if (lastToday && lastToday.s === 2 && ["low", "overwhelmed", "anxious", "drained"].includes(lastToday.f))
     return { bed: "breathe", where: "Breathe", title: "Slow down for a minute", sub: "You checked in feeling a lot today. Three slow breaths first.", label: "Breathe slowly", run: () => { S.bpat = 0; S.breaths = 3; save(); show("breathe"); } };
+  if (st.length && nx >= 0 && !(lastToday && lastToday.f === "stuck")) return { bed: "path", where: "Today", title: st[nx].t, sub: `Step ${nx + 1} of ${st.length} on today's list. Just this one.`, label: "Start two minutes on it", run: () => { S.focusMin = 2; S.ftask = st[nx].t; save(); show("focus"); $("#fStart").click(); }, alt: { label: "Open today's list", run: () => show("path") } };
   if (lastToday && lastToday.f === "stuck") return focus2;
-  if (st.length && nx >= 0) return { bed: "path", where: "Today", title: st[nx].t, sub: `Step ${nx + 1} of ${st.length} on today's list. Just this one.`, label: "Open today's list", run: () => show("path") };
   if (h >= 20 || h < 5) return { bed: "breathe", where: "Breathe", title: "Wind down", sub: "A minute of slow breathing before sleep.", label: "Breathe for a minute", run: () => { S.bpat = 2; S.breaths = 3; save(); show("breathe"); } };
   if (!lastToday && h < 12) return { bed: "feelings", where: "Check in", title: "How are you starting the day?", sub: "Thirty seconds. It shapes what Quietroot suggests.", label: "Check in", run: () => show("feelings") };
   if (S.goals.includes("routine") && !st.length) return { bed: "path", where: "Today", title: "Plan today in a few steps", sub: "Seeing the order makes starting easier.", label: "Plan today", run: () => show("path") };
@@ -435,9 +436,8 @@ function renderHome() {
   $("#qlinks").innerHTML = [
     ["breathe", "breathe", "Breathe", "1 minute"],
     ["feelings", "heart", "Check in", lf && today(new Date(last.t)) === today() ? lf.w : "30 seconds"],
-    ["path", "path", "Today", st.length ? `${done} of ${st.length}` : "Plan it"],
-    ["unwind", "sparkle", "Unwind", "4 quiet games"]
-  ].map(([go, ic, t, s]) => `<button class="qlink" data-go="${go}">${icon(ic)}<span><b>${t}</b><small>${esc(s)}</small></span></button>`).join("");
+    ["path", "path", "Today", st.length ? `${done} of ${st.length}` : "Plan it"]
+  ].map(([go, ic, t, s]) => `<button class="qlink" data-go="${go}"><b>${t}</b><small>${esc(s)}</small></button>`).join("");
   $$("#qlinks [data-go]").forEach(b => b.onclick = () => show(b.dataset.go));
   $("#quietBtn").innerHTML = `${icon("moon")}<span>Quiet</span>`;
   $("#quietBtn").setAttribute("aria-label", "Quiet mode: a simpler screen for hard moments");
@@ -496,7 +496,7 @@ function drawFocus(p, tapeP = p, breakMode = false) {
     <rect x="60" y="${base}" width="180" height="12" style="fill:var(--soil)"/>
     <rect x="52" y="${base + 8}" width="196" height="26" rx="3" style="fill:var(--timber)"/>
     <path d="M52 ${base + 21}H248" stroke="rgba(0,0,0,.18)" stroke-width="1.5"/>
-    <rect x="22" y="188" width="34" height="30" rx="5" style="fill:var(--orange)"/><circle cx="39" cy="203" r="6" fill="#1c1c1c" opacity=".35"/>
+    <rect x="22" y="188" width="34" height="30" rx="5" fill="#3a3d40" stroke="#5a5f64"/><circle cx="39" cy="203" r="6" fill="#e9c23f"/>
     <clipPath id="tapeClip"><rect x="54" y="190" width="${tapeW}" height="22"/></clipPath>
     <g clip-path="url(#tapeClip)"><rect x="54" y="192" width="214" height="18" fill="${breakMode ? "#9cc6e4" : "#e9c23f"}"/>${ticks}</g>
     <rect x="${54 + tapeW - 3}" y="189" width="5" height="24" rx="1" fill="#2b2a24" opacity="${tapeW > 2 ? 1 : 0}"/>`;
@@ -690,7 +690,7 @@ const STEP = {
   move: ["Exercise", "#ff9db3"], outside: ["Go outside", "#7fe0bd"], cook: ["Cook", "#ffb48a"], chores: ["Chores", "#b6a4ff"],
   call: ["Call someone", "#7fe0bd"], rest: ["Downtime", "#ff9db3"], bed: ["Wind down", "#b6a4ff"], own: ["", "#ffd27a"]
 };
-const stepIc = k => { const c = (STEP[k] || STEP.own)[1]; return `<span class="ic" style="background:color-mix(in srgb,${c} 20%,transparent);color:${c}">${icon(k === "rest" ? "heart" : k)}</span>`; };
+const stepIc = k => `<span class="ic">${icon(k === "rest" ? "heart" : k)}</span>`;
 let pmode = null, pathMore = false;
 $("#moreSteps").onclick = () => { pathMore = !pathMore; renderPath(); };
 function renderPath() {
@@ -791,6 +791,7 @@ function answer(level) {
   // Strong heavy feelings: point gently to real support, without diagnosing.
   const needsSupport = level === 2 && ["low", "overwhelmed", "anxious", "drained"].includes(feelPick.id);
   $("#support").classList.toggle("hidden", !needsSupport);
+  if (needsSupport) say("feelings", "Thanks for checking in. Support options are below.");
   $("#feelGo").innerHTML = feelPick.go.map((id, i) => `<button class="btn ${i ? "" : "go "}block" data-go2="${id}">${GO_LABEL[id]}</button>`).join("") + `<button class="btn block" data-home2>Back to the lot</button>`;
   $$("[data-go2]").forEach(b => b.onclick = () => { if (b.dataset.go2 === "focus") { S.focusMin = 2; fs.stepsOpen = true; } if (b.dataset.go2 === "quiet") return enterQuiet(); show(b.dataset.go2); });
   $("[data-home2]").onclick = () => show("home");
@@ -1027,7 +1028,7 @@ function renderWelcome(step) {
   const body = $("#obBody");
   if (step === 0) {
     body.innerHTML = `<div class="ob-hero">
-        <svg class="mark" viewBox="0 0 96 96" aria-hidden="true"><defs><linearGradient id="obG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fe0bd"/><stop offset="1" stop-color="#86c8ff"/></linearGradient></defs><rect x="6" y="54" width="84" height="30" rx="3" fill="#b8875a"/><rect x="14" y="60" width="68" height="18" rx="2" fill="#3b3226"/><path d="M48 74V44" stroke="#7fe0bd" stroke-width="4" stroke-linecap="round"/><path d="M48 50c0-14 9-22 22-22 0 14-9 22-22 22Z" fill="url(#obG)"/><path d="M48 58c0-11-7-18-18-18 0 11 7 18 18 18Z" fill="url(#obG)" opacity=".75"/></svg>
+        <svg class="mark" viewBox="0 0 96 96" aria-hidden="true"><defs><linearGradient id="obG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#93c788"/><stop offset="1" stop-color="#93c788"/></linearGradient></defs><rect x="6" y="54" width="84" height="30" rx="3" fill="#b8875a"/><rect x="14" y="60" width="68" height="18" rx="2" fill="#3b3226"/><path d="M48 74V44" stroke="#7fe0bd" stroke-width="4" stroke-linecap="round"/><path d="M48 50c0-14 9-22 22-22 0 14-9 22-22 22Z" fill="url(#obG)"/><path d="M48 58c0-11-7-18-18-18 0 11 7 18 18 18Z" fill="url(#obG)" opacity=".75"/></svg>
         <h1>Welcome to Quietroot</h1>
         <p class="lede">A quiet lot for busy minds.</p>
         <p class="muted">Focus, calm down and plan your day in small steps. Everything you do grows something here, and nothing is ever taken away.</p></div>
